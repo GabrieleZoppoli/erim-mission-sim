@@ -1,0 +1,6 @@
+# CPU (development, smoke tests):  pip install -r requirements.txt
+# GPU on the compute node:         pip install "jax[cuda12]==<same version as below>"  (see README, three routes)
+jax==0.10.2
+jaxlib==0.10.2
+numpy>=1.26
+pytest>=7

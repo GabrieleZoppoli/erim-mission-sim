@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "erimsim"
+version = "0.1.0"
+description = "Station-Machine-Object mission simulation: Extended Ritz Method (neural FSP functions) vs classical estimation and control, with image recognition and identification. JAX."
+requires-python = ">=3.10"
+license = {text = "MIT"}
+dependencies = ["jax>=0.4.30", "numpy>=1.24"]
+
+[project.optional-dependencies]
+cuda = ["jax[cuda12]>=0.4.30"]
+test = ["pytest>=7"]
+
+[tool.setuptools.packages.find]
+include = ["erimsim*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
