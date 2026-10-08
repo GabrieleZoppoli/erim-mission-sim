@@ -89,6 +89,10 @@ def rollout_one(agent, params, mission, cfg, T, lam=0.0, with_images=True, extra
         u = dyn.clip_u(agent.act(params, sm, obs, t, kact), cfg)
         ex = extra(S, sm, obs, x, z, mission, t) if extra is not None else None
         c = stage_cost(x, z, u, sm.log_post, cfg, lam)
+        x_d, z_d, u_d = x, z, u
+        # Diagnostics below are not part of the cost: they are computed on stop_gradient copies so that no
+        # singular derivative of a diagnostic (a norm at zero, a normalisation) can poison the backward pass.
+        x, z, u, sm, obs = jax.lax.stop_gradient((x, z, u, sm, obs))
         p_hat, q_hat = sm.x_hat[0:3], quat.normalize(sm.x_hat[3:7])
         log = StageLog(
             cost=c, dist=_snorm(z[0:3] - x[0:3]),
@@ -99,9 +103,9 @@ def rollout_one(agent, params, mission, cfg, T, lam=0.0, with_images=True, extra
             class_ok=(jnp.argmax(sm.log_post) == mission.cls).astype(jnp.float32),
             post_true=jnp.exp(sm.log_post[mission.cls]), entropy=entropy(sm.log_post),
             proxies=sm.proxies, u_norm=_snorm(u), y_r=obs[1][0], p_x=x[0:3], p_z=z[0:3])
-        x1 = dyn.machine_step(x, u, jax.random.normal(kx, (6,)), cfg)
-        z1 = dyn.object_step(z, mission.f, jax.random.normal(kz, (6,)), cfg)
-        return (x1, z1, S, u), (log, ex)
+        x1 = dyn.machine_step(x_d, u_d, jax.random.normal(kx, (6,)), cfg)
+        z1 = dyn.object_step(z_d, mission.f, jax.random.normal(kz, (6,)), cfg)
+        return (x1, z1, S, u_d), (log, ex)
 
     # With images in the loop (E3: renderer and recogniser inside the policy search) the per-stage intermediates of
     # the renderer are large (about 10 MB per mission and stage), so the stage is rematerialised in the backward

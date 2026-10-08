@@ -57,13 +57,18 @@ def train_policy(key, params, Agent, cfg, tcfg, lam=0.0, with_images=False, step
         pol = params.pol if r == 0 else jax.tree_util.tree_map(
             lambda a: a + 0.05 * jax.random.normal(jax.random.fold_in(kr, 1), a.shape), params.pol)
         st = models.adam_init(pol)
-        lr_scale, skips = 1.0, 0
+        lr_scale, skips, finite_run = 1.0, 0, 0
         for i in range(steps):
             h = horizons[min(len(horizons) - 1, (i * len(horizons)) // max(steps, 1))]
             missions = dyn.sample_missions(jax.random.fold_in(kr, 1000 + i), batch, cfg)
             lr = models.cosine_lr(i, steps, tcfg.pol_lr) * lr_scale
             pol, st, l, gn, ok = step(pol, st, missions, h, lr)
-            if not bool(ok):
+            if bool(ok):
+                finite_run += 1
+                if finite_run >= 100 and lr_scale < 1.0:        # a rare singular step must not freeze the search
+                    lr_scale, finite_run = min(1.0, lr_scale * 2.0), 0
+            else:
+                finite_run = 0
                 skips += 1
                 n_skipped += 1
                 lr_scale = max(lr_scale * 0.5, 1.0 / 64)

@@ -16,9 +16,11 @@ def observe_own(x, eta, cfg):
 
 
 def rel_to_rae(d):
-    r = jnp.linalg.norm(d, axis=-1)
+    r = jnp.sqrt(jnp.sum(d * d, axis=-1) + 1e-12)
     az = jnp.arctan2(d[..., 1], d[..., 0])
-    el = jnp.arcsin(jnp.clip(d[..., 2] / jnp.maximum(r, 1e-9), -1.0, 1.0))
+    # elevation through atan2 of (z, horizontal distance): arcsin(z / r) has an infinite derivative when the Object
+    # is exactly above or below the Machine, which poisoned about one policy-search step in 200 on the GPUs
+    el = jnp.arctan2(d[..., 2], jnp.sqrt(d[..., 0] ** 2 + d[..., 1] ** 2 + 1e-12))
     return jnp.stack([r, az, el], -1)
 
 

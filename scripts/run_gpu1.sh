@@ -6,5 +6,5 @@ OUT=${1:?out_dir}; mkdir -p "$OUT"
 python3 -m erimsim --exp E2 --out "$OUT" --gpu 1 --resume --units 'est_*' --shard 0/2 --mem-fraction 0.45 > "$OUT/e2_shard0.log" 2>&1 &
 python3 -m erimsim --exp E2 --out "$OUT" --gpu 1 --resume --units 'est_*' --shard 1/2 --mem-fraction 0.45 > "$OUT/e2_shard1.log" 2>&1 &
 wait
-python3 -m erimsim --exp E4 --out "$OUT" --gpu 1 --resume
+if [ -z "${SKIP_E4:-}" ]; then python3 -m erimsim --exp E4 --out "$OUT" --gpu 1 --resume; else echo "E4 skipped (SKIP_E4 set)"; fi
 echo "GPU1 stream finished $(date -u)"
