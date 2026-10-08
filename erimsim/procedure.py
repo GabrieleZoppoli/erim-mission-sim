@@ -13,7 +13,7 @@ N_PROXY = 5
 
 def stop_times(proxies, eps, T_cons, t_hat):
     """proxies: [M, T, 5]; eps: [5]; returns stop_t [M] (int, T if never) and stopped [M] (bool)."""
-    below = jnp.all(proxies < eps, axis=-1)                       # [M, T]
+    below = jnp.all(proxies <= eps, axis=-1)                      # [M, T]
 
     def scan_fn(carry, b):
         run = jnp.where(b, carry + 1, 0)
@@ -37,9 +37,19 @@ def stop_grid(proxies, eps0, eps_scales, T_cons_list, t_hat):
     return out
 
 
-def calibrate_eps(proxies, stage, quantile=0.5):
-    """Reference thresholds: the given quantile of each proxy over missions at a fixed stage (baseline run)."""
-    return jnp.quantile(proxies[:, stage, :], quantile, axis=0)
+RECOGNITION_EPS = 0.05        # 1 - max posterior <= 0.05: the top class holds at least 95 % of the posterior
+
+
+def calibrate_eps(proxies, stage, quantile=0.5, recognition_eps=RECOGNITION_EPS, floor=1e-9):
+    """Reference thresholds. The four estimation proxies (covariance traces for the classical chain, ensemble
+    disagreements for the ERIM) live on method-specific scales, so each gets the given quantile of its own values
+    over the missions at a fixed stage, floored away from zero. The recognition proxy (1 - max posterior) is the
+    same quantity for every method and saturates at exactly zero once the recogniser is confident, so a quantile
+    of it degenerates to zero and nothing would ever stop (seen on the first GPU run: a 93 %-correct recogniser
+    "never stopped" while a 23 %-correct one stopped in 91 % of the missions); it gets an absolute threshold."""
+    q = jnp.quantile(proxies[:, stage, :], quantile, axis=0)
+    eps = jnp.maximum(q, floor)
+    return eps.at[-1].set(recognition_eps)
 
 
 def sequential_reference(proxies, eps, T_cons, t_hat):
@@ -49,7 +59,7 @@ def sequential_reference(proxies, eps, T_cons, t_hat):
     for m in range(P.shape[0]):
         run, stop = 0, P.shape[1]
         for t in range(P.shape[1]):
-            run = run + 1 if np.all(P[m, t] < np.asarray(eps)) else 0
+            run = run + 1 if np.all(P[m, t] <= np.asarray(eps)) else 0
             if t >= t_hat and run >= T_cons:
                 stop = t
                 break

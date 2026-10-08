@@ -25,3 +25,15 @@ def test_grid_and_at_stop():
     assert stop.tolist() == [30, 5, 5] and stopped.tolist() == [False, True, True]
     vals = jnp.arange(30)[None, :].repeat(3, 0).astype(jnp.float32)
     np.testing.assert_allclose(procedure.at_stop(vals, stop), [29, 5, 5])
+
+
+def test_calibrate_eps_never_degenerates_to_zero():
+    """A proxy that is exactly zero at the calibration stage (a saturated posterior) must still allow stopping."""
+    M, T = 20, 60
+    P = np.full((M, T, 5), 0.1, np.float32)
+    P[:, :, 4] = 0.0                                   # recogniser always certain
+    P[:, 40:, :4] = 0.01                               # estimators converge at stage 40
+    eps = procedure.calibrate_eps(jnp.asarray(P), 50, 0.75)
+    assert abs(float(eps[4]) - procedure.RECOGNITION_EPS) < 1e-6 and bool(jnp.all(eps > 0))
+    stop, stopped = procedure.stop_times(jnp.asarray(P), eps, 4, 5)
+    assert bool(jnp.all(stopped)) and int(stop[0]) == 43
