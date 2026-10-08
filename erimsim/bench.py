@@ -42,12 +42,12 @@ def main(argv=None):
     A0 = eagent.bind(cfg, mcfg, use_images=False, use_post=False)
     g = jax.jit(jax.grad(lambda pol, m: jnp.mean(sim.rollout(A0, params._replace(pol=pol), m, cfg, 100, 0.0, False)[2])))
     timed("policy-search gradient, batch 256 x 100 stages", g, params.pol, ms)
+    X = jnp.zeros((4096, (mcfg.N + 1) * 24)); Y = jnp.zeros((4096, 15))
+    timed("estimator ensemble training, 200 steps", jax.jit(lambda k: estimators.train_ensemble(k, params.est_x, X, Y, 200, 256, 1e-3)[0]), jax.random.PRNGKey(4))
     A1 = eagent.bind(cfg, mcfg, use_images=True, use_post=True)
     ms128 = jax.tree_util.tree_map(lambda a_: a_[:128], ms)
     g1 = jax.jit(jax.grad(lambda pol, m: jnp.mean(sim.rollout(A1, params._replace(pol=pol), m, cfg, 100, 0.1, True)[2])))
     timed("dual policy gradient (images in loop), batch 128 x 100", g1, params.pol, ms128)
-    X = jnp.zeros((4096, (mcfg.N + 1) * 24)); Y = jnp.zeros((4096, 15))
-    timed("estimator ensemble training, 200 steps", jax.jit(lambda k: estimators.train_ensemble(k, params.est_x, X, Y, 200, 256, 1e-3)[0]), jax.random.PRNGKey(4))
     print("scale: E1 eval = 1000 missions x 300 stages ~ 12 x the 256x100 rollout; policy search = pol_steps gradients;", flush=True)
     return 0
 

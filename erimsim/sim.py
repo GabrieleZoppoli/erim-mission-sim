@@ -97,7 +97,12 @@ def rollout_one(agent, params, mission, cfg, T, lam=0.0, with_images=True, extra
         z1 = dyn.object_step(z, mission.f, jax.random.normal(kz, (6,)), cfg)
         return (x1, z1, S, u), (log, ex)
 
-    (xT, zT, _, _), (logs, extras) = lax.scan(step, (mission.x0, mission.z0, S0, jnp.zeros(6)), jnp.arange(T))
+    # With images in the loop (E3: renderer and recogniser inside the policy search) the per-stage intermediates of
+    # the renderer are large (about 10 MB per mission and stage), so the stage is rematerialised in the backward
+    # pass: only the carry is kept per stage and the stage is recomputed when its gradient is needed. Exact, and
+    # without effect on forward-only rollouts.
+    step_fn = jax.checkpoint(step) if with_images else step
+    (xT, zT, _, _), (logs, extras) = lax.scan(step_fn, (mission.x0, mission.z0, S0, jnp.zeros(6)), jnp.arange(T))
     terminal = cfg.c_term * jnp.sum((zT[0:3] - xT[0:3]) ** 2)
     total = jnp.sum(logs.cost) + terminal
     return (logs, terminal, total) if extra is None else (logs, terminal, total, extras)
