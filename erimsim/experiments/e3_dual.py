@@ -27,8 +27,11 @@ def run_unit(c, unit, out, log=print):
         params, _, _ = common.train_erim(jax.random.PRNGKey(1000 + seed), c, log=log)
     A = eagent.bind(cfg, mcfg, use_images=True, use_post=True)
     params, info = policy.train_policy(jax.random.PRNGKey(3000 + seed), params, A, cfg, tcfg, lam=lam, with_images=True,
-                                       steps=c.exp.e3_pol_steps, batch=c.exp.e3_batch, restarts=1)
-    log(f"  dual policy trained (lambda={lam}): loss {info['best_loss']:.3f} ({time.time() - t0:.0f}s)")
+                                       steps=c.exp.e3_pol_steps, batch=c.exp.e3_batch, restarts=1, log=log)
+    log(f"  dual policy trained (lambda={lam}): best validation loss {info['best_loss']:.3f} (initial {info['initial_loss']:.3f}, "
+        f"{info['n_skipped']} skipped steps) ({time.time() - t0:.0f}s)")
+    if not info["improved"]:
+        log("  WARNING: the dual policy search did not improve on the warm-start policy")
     os.makedirs(os.path.join(out, "weights"), exist_ok=True)
     io.save_pytree(os.path.join(out, "weights", f"dual_l{lam:g}_s{seed}.npz"), params)
     rows, logs = common.evaluate(A, params, c, missions, f"dual_l{lam:g}", seed, chunk=200, lam=lam)

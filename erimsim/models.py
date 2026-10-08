@@ -76,8 +76,11 @@ def adam_init(params):
 
 def adam_update(params, grads, state, lr, b1=0.9, b2=0.999, eps=1e-8, clip=None):
     if clip is not None:
+        # Global-norm clipping that cannot poison the parameters: a non-finite norm (overflow in a long backward
+        # pass) scales the step to zero, and non-finite entries are dropped, so the optimiser state stays finite.
         gn = jnp.sqrt(sum(jnp.sum(g * g) for g in jax.tree_util.tree_leaves(grads)))
-        grads = jax.tree_util.tree_map(lambda g: g * jnp.minimum(1.0, clip / (gn + 1e-12)), grads)
+        scale = jnp.where(jnp.isfinite(gn), jnp.minimum(1.0, clip / (gn + 1e-12)), 0.0)
+        grads = jax.tree_util.tree_map(lambda g: jnp.where(jnp.isfinite(g), g, 0.0) * scale, grads)
     t = state["t"] + 1
     m = jax.tree_util.tree_map(lambda m_, g: b1 * m_ + (1 - b1) * g, state["m"], grads)
     v = jax.tree_util.tree_map(lambda v_, g: b2 * v_ + (1 - b2) * g * g, state["v"], grads)

@@ -38,7 +38,7 @@ def train_eval_est(c, n, M, seed, log):
     params = eagent.init_params(k[1], cfg, mcfg, norm, n_hidden=n)
     params, losses = estimators.train_estimators(k[2], params, data, tcfg)
     A = eagent.bind(cfg, mcfg, use_images=False, use_post=False)
-    params, info = policy.train_policy(k[3], params, A, cfg, tcfg, steps=tcfg.pol_steps, batch=min(tcfg.pol_batch, 128))
+    params, info = policy.train_policy(k[3], params, A, cfg, tcfg, steps=tcfg.pol_steps, batch=min(tcfg.pol_batch, 128), log=log)
     test = dyn.sample_missions(jax.random.PRNGKey(TEST_SEED), c.exp.e2_M_test, cfg)
     train_ms = dyn.sample_missions(k[0], M, cfg)                      # the missions the data came from
     f = jax.jit(lambda ms: sim.rollout(A, params, ms, cfg, cfg.T, 0.0, with_images=False))
@@ -49,7 +49,8 @@ def train_eval_est(c, n, M, seed, log):
            "err_xp_T": float(jnp.mean(lt.err_xp[:, -1])), "err_zp_T": float(jnp.mean(lt.err_zp[:, -1])),
            "err_zv_T": float(jnp.mean(lt.err_zv[:, -1])), "err_f_T": float(jnp.mean(lt.err_f[:, -1])),
            "err_g_T": float(jnp.mean(lt.err_g[:, -1])), "final_dist": float(jnp.mean(lt.dist[:, -1])),
-           "pol_loss": info["best_loss"], **{f"loss_{k_}": v for k_, v in losses.items()}}
+           "pol_loss": info["best_loss"], "pol_initial": info["initial_loss"], "pol_improved": int(info["improved"]),
+           "pol_skipped": info["n_skipped"], **{f"loss_{k_}": v for k_, v in losses.items()}}
     return row
 
 

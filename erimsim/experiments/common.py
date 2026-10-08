@@ -36,9 +36,13 @@ def train_erim(key, c, n_hidden=None, cnn_J=None, n_missions=None, ensemble=None
     acc = float(recogniser.accuracy(jax.random.fold_in(k[3], 9), cnn, data, cfg))
     log(f"  recogniser trained: final loss {float(ls[-1]):.3f}, accuracy on training poses {acc:.3f}  ({time.time() - t0:.0f}s)")
     A = eagent.bind(cfg, mcfg, use_images=False, use_post=False)
-    params, info = policy.train_policy(k[4], params, A, cfg, tcfg, lam=0.0, with_images=False, steps=pol_steps)
-    log(f"  policy trained: best loss {info['best_loss']:.3f} (restart {info['best_restart']})  ({time.time() - t0:.0f}s)")
+    params, info = policy.train_policy(k[4], params, A, cfg, tcfg, lam=0.0, with_images=False, steps=pol_steps, log=log)
+    log(f"  policy trained: best validation loss {info['best_loss']:.3f} (initial {info['initial_loss']:.3f}, restart "
+        f"{info['best_restart']}, step {info['best_step']}, {info['n_skipped']} skipped steps)  ({time.time() - t0:.0f}s)")
+    if not info["improved"]:
+        log("  WARNING: the policy search did not improve on the initial policy; the saved policy is untrained")
     return params, mcfg, {"est_losses": losses, "cnn_loss": float(ls[-1]), "cnn_acc": acc, "pol": info["best_loss"],
+                          "pol_initial": info["initial_loss"], "pol_improved": info["improved"], "pol_skipped": info["n_skipped"],
                           "train_seconds": time.time() - t0, "data_rows": int(data.cls.shape[0])}
 
 

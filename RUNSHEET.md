@@ -55,6 +55,25 @@ If the streams were launched from an earlier commit, do not check out the new on
 sibling directory and run the E3 line from there with the same `--out` once E1 has finished (E3 warm-starts from
 `E1/weights`).
 
+## 3b. Rerun after the policy-search fix of 8 Oct (commit `<POLFIX>`)
+
+The first full-size run showed the ERIM policy search diverging to a non-finite loss late in training (all E1 seeds,
+one E2 seed in three); the code then evaluated the untrained initial policy. From commit `<POLFIX>` every step is
+checked (non-finite steps are skipped and halve the learning rate) and the policy returned is the best finite
+validation iterate; the log carries a line every val_every steps. Void outputs: E1 (ERIM rows, weights), E2
+`rates_est.csv` and `rates_ref.csv`, E3. Still valid: E1 baseline rows (cheap to regenerate), E2 `rates_cnn.csv`, E4.
+
+```bash
+git clone https://github.com/GabrieleZoppoli/erim-mission-sim erim-mission-sim-fix && cd erim-mission-sim-fix && git checkout <POLFIX>
+. ../erim-mission-sim/.venv/bin/activate            # the same environment
+pkill -f "shard 0/2"; pkill -f "shard 1/2"          # the void E2 estimator shards; the GPU1 wrapper then goes on to E4
+bash scripts/rerun_after_fix.sh $OUT                 # sets the void results aside, keeps cnn_* and E4
+nohup bash scripts/run_gpu0.sh $OUT > $OUT/gpu0_rerun.log 2>&1 &     # when the cnn_* sweep of the first run has finished
+nohup bash scripts/run_gpu1.sh $OUT > $OUT/gpu1_rerun.log 2>&1 &     # when E4 has finished (or now with --mem-fraction 0.3 if memory allows)
+```
+A training unit now prints `policy trained: best validation loss ... (initial ..., restart r, step k, n skipped steps)`
+and `training.csv` carries `pol_improved`; a unit with `pol_improved = False` is a failure to report, not a result.
+
 ## 4. What to return (small files only; weights are optional)
 
 ```bash

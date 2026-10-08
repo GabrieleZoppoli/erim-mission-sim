@@ -62,6 +62,12 @@ def observe(mission, x, z, t, key, cfg, with_images=True):
     return y_own, y_obj, img
 
 
+def _snorm(v):
+    """Euclidean norm with a finite gradient at zero (the logs are scan outputs: a 0/0 there would poison the
+    backward pass of the policy search even though they do not enter the cost)."""
+    return jnp.sqrt(jnp.sum(v * v) + 1e-12)
+
+
 def stage_cost(x, z, u, log_post, cfg, lam):
     dist2 = jnp.sum((z[0:3] - x[0:3]) ** 2)
     return dist2 + cfg.c_u * jnp.sum(u * u) + lam * entropy(log_post)
@@ -85,14 +91,14 @@ def rollout_one(agent, params, mission, cfg, T, lam=0.0, with_images=True, extra
         c = stage_cost(x, z, u, sm.log_post, cfg, lam)
         p_hat, q_hat = sm.x_hat[0:3], quat.normalize(sm.x_hat[3:7])
         log = StageLog(
-            cost=c, dist=jnp.linalg.norm(z[0:3] - x[0:3]),
-            err_xp=jnp.linalg.norm(p_hat - x[0:3]), err_xa=jnp.linalg.norm(quat.boxminus(q_hat, x[3:7])),
-            err_xv=jnp.linalg.norm(sm.x_hat[7:10] - x[7:10]),
-            err_zp=jnp.linalg.norm(sm.z_hat[0:3] - z[0:3]), err_zv=jnp.linalg.norm(sm.z_hat[3:6] - z[7:10]),
-            err_f=jnp.linalg.norm(sm.f_hat - mission.f), err_g=jnp.linalg.norm(sm.g_hat - mission.g),
+            cost=c, dist=_snorm(z[0:3] - x[0:3]),
+            err_xp=_snorm(p_hat - x[0:3]), err_xa=_snorm(quat.boxminus(q_hat, x[3:7])),
+            err_xv=_snorm(sm.x_hat[7:10] - x[7:10]),
+            err_zp=_snorm(sm.z_hat[0:3] - z[0:3]), err_zv=_snorm(sm.z_hat[3:6] - z[7:10]),
+            err_f=_snorm(sm.f_hat - mission.f), err_g=_snorm(sm.g_hat - mission.g),
             class_ok=(jnp.argmax(sm.log_post) == mission.cls).astype(jnp.float32),
             post_true=jnp.exp(sm.log_post[mission.cls]), entropy=entropy(sm.log_post),
-            proxies=sm.proxies, u_norm=jnp.linalg.norm(u), y_r=obs[1][0], p_x=x[0:3], p_z=z[0:3])
+            proxies=sm.proxies, u_norm=_snorm(u), y_r=obs[1][0], p_x=x[0:3], p_z=z[0:3])
         x1 = dyn.machine_step(x, u, jax.random.normal(kx, (6,)), cfg)
         z1 = dyn.object_step(z, mission.f, jax.random.normal(kz, (6,)), cfg)
         return (x1, z1, S, u), (log, ex)
