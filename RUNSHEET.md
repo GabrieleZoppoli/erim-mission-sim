@@ -40,14 +40,20 @@ command is restartable with the same line (`--resume` is set in the scripts). Ki
 | Stream | Units | Per unit | Total | GPU memory |
 |---|---|---|---|---|
 | GPU0: E1 | 5 trainings + 6 evaluations | train ≈ 20–30 min, eval ≈ 3 min | ≈ 2.5 h | ≤ 12 GB |
-| GPU0: E3 | 9 (3 λ × 3 seeds) | ≈ 40 min | ≈ 6 h | ≤ 20 GB |
+| GPU0: E3 | 9 (3 λ × 3 seeds) | ≈ 1.5–2 h (from the bench: images-in-loop gradient ≈ 3 × the 1.2 s forward per 256 × 100, 2000 steps, horizons 50–300) | ≈ 15–18 h | ≤ 10 GB after the per-stage rematerialisation of 8 Oct |
 | GPU0: E2 CNN + ref | 18 + 1 | ≈ 8 min | ≈ 2.5 h | ≤ 10 GB |
 | GPU1: E2 estimators | 36 units × 3 seeds, two shards | ≈ 5 min per seed | ≈ 4.5 h wall-clock | 2 × 45 % |
 | GPU1: E4 | 3 seeds | ≈ 3 h | ≈ 9 h | ≤ 16 GB |
 
-Budget: about 30 GPU-hours planned against the 48 agreed. If a stream runs long, cut in this order: E4 seeds 3→1
-(`--seeds 0`), E2 estimator grid thinned (`--units 'est_n*_M50' ...`), E3 seeds 3→2, E1 seeds 5→3, evaluation missions
-1000→500 (edit `M_eval` in `config.py`).
+Budget: about 35 GPU-hours planned against the 48 agreed (E3 is the long pole). If a stream runs long, cut in this
+order: E3 seeds 3→2 (`--seeds 0,1`), E4 seeds 3→1 (`--seeds 0`), E2 estimator grid thinned (`--units 'est_n*_M50' ...`),
+E1 seeds 5→3, evaluation missions 1000→500 (edit `M_eval` in `config.py`).
+
+Note of 8 Oct: the first bench on the node showed the E3 gradient asking for 146 GB at batch 128 × 100 stages; commit
+`3f278e0` rematerialises the stage inside the rollout when images are in the loop (E1, E2 and E4 code paths untouched).
+If the streams were launched from an earlier commit, do not check out the new one in the running clone: clone it into a
+sibling directory and run the E3 line from there with the same `--out` once E1 has finished (E3 warm-starts from
+`E1/weights`).
 
 ## 4. What to return (small files only; weights are optional)
 
