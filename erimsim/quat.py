@@ -35,23 +35,28 @@ def to_rotmat(q):
     return r
 
 
+def _safe_norm(v):
+    """sqrt(|v|^2 + tiny): equals |v| to float precision and has a finite derivative at v = 0 (the plain norm has a
+    0/0 derivative there, which turns Kalman Jacobians into NaN at zero angular velocity)."""
+    return jnp.sqrt(jnp.sum(v * v, axis=-1, keepdims=True) + 1e-24)
+
+
 def exp_map(theta):
-    """Rotation vector -> unit quaternion (safe at zero)."""
-    a = jnp.linalg.norm(theta, axis=-1, keepdims=True)
+    """Rotation vector -> unit quaternion (safe at zero, also for derivatives)."""
+    a = _safe_norm(theta)
     half = 0.5 * a
-    s = jnp.where(a > 1e-8, jnp.sin(half) / jnp.maximum(a, 1e-12), 0.5 - a * a / 48.0)
+    s = jnp.sin(half) / a
     return jnp.concatenate([jnp.cos(half), s * theta], -1)
 
 
 def log_map(q):
-    """Unit quaternion -> rotation vector (angle in (-pi, pi])."""
+    """Unit quaternion -> rotation vector (angle in (-pi, pi]), safe at the identity also for derivatives."""
     q = canonical(q)
     w = jnp.clip(q[..., :1], -1.0, 1.0)
     v = q[..., 1:]
-    n = jnp.linalg.norm(v, axis=-1, keepdims=True)
+    n = _safe_norm(v)
     angle = 2.0 * jnp.arctan2(n, w)
-    k = jnp.where(n > 1e-8, angle / jnp.maximum(n, 1e-12), 2.0 / jnp.maximum(w, 1e-12))
-    return k * v
+    return (angle / n) * v
 
 
 def boxplus(q, dtheta):
@@ -79,3 +84,29 @@ def random(key, shape=()):
 
 def identity(shape=()):
     return jnp.broadcast_to(jnp.array([1.0, 0.0, 0.0, 0.0]), shape + (4,))
+
+
+def from_two_columns(c1, c2):
+    """Orthonormalise two estimated columns of R (Gram-Schmidt) and return the unit quaternion (Shepperd's method,
+    branch-free: the four candidates are weighted by softmax of their squared denominators)."""
+    e1 = c1 / jnp.maximum(jnp.linalg.norm(c1, axis=-1, keepdims=True), 1e-9)
+    c2 = c2 - jnp.sum(c2 * e1, -1, keepdims=True) * e1
+    e2 = c2 / jnp.maximum(jnp.linalg.norm(c2, axis=-1, keepdims=True), 1e-9)
+    e3 = jnp.cross(e1, e2)
+    R = jnp.stack([e1, e2, e3], -1)          # columns
+    m00, m01, m02 = R[..., 0, 0], R[..., 0, 1], R[..., 0, 2]
+    m10, m11, m12 = R[..., 1, 0], R[..., 1, 1], R[..., 1, 2]
+    m20, m21, m22 = R[..., 2, 0], R[..., 2, 1], R[..., 2, 2]
+    tr = m00 + m11 + m22
+    q0 = jnp.stack([1 + tr, m21 - m12, m02 - m20, m10 - m01], -1)
+    q1 = jnp.stack([m21 - m12, 1 + m00 - m11 - m22, m01 + m10, m02 + m20], -1)
+    q2 = jnp.stack([m02 - m20, m01 + m10, 1 - m00 + m11 - m22, m12 + m21], -1)
+    q3 = jnp.stack([m10 - m01, m02 + m20, m12 + m21, 1 - m00 - m11 + m22], -1)
+    cands = jnp.stack([q0, q1, q2, q3], -2)
+    cands = cands / jnp.maximum(jnp.linalg.norm(cands, axis=-1, keepdims=True), 1e-9)
+    # align signs with the first candidate's and pick the best-conditioned one smoothly
+    sgn = jnp.sign(jnp.sum(cands * cands[..., :1, :], -1, keepdims=True) + 1e-12)
+    cands = cands * sgn
+    w = jax.nn.softmax(20.0 * jnp.stack([1 + tr, 1 + m00 - m11 - m22, 1 - m00 + m11 - m22, 1 - m00 - m11 + m22], -1), -1)
+    q = jnp.sum(w[..., :, None] * cands, -2)
+    return canonical(normalize(q))

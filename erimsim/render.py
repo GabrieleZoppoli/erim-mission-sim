@@ -70,12 +70,68 @@ def sd_cross(p):
 
 
 PRIMITIVES = (sd_sphere, sd_cube, sd_cylinder, sd_cone, sd_torus, sd_capsule, sd_bracket, sd_cross)
+HIT_EPS = 0.03
+
+
+def sdf_oh(oh, p):
+    """Signed distance of points p (..., 3) in the Object frame; oh = one-hot class weights (8,), so that the class
+    is an ordinary array argument (vmappable, custom-vjp friendly)."""
+    allsd = jnp.stack([f(p) for f in PRIMITIVES], 0)          # (8, ...)
+    return jnp.tensordot(oh, allsd, axes=(0, 0))
 
 
 def sdf(cls, p):
-    """Signed distance of points p (..., 3) in the Object frame to the solid of class cls (scalar int)."""
-    allsd = jnp.stack([f(p) for f in PRIMITIVES], 0)          # (8, ...)
-    return jnp.take(allsd, cls, axis=0)
+    return sdf_oh(jax.nn.one_hot(cls, N_CLASSES), p)
+
+
+def make_march(steps):
+    """Sphere tracing with a custom backward pass: forward runs the fixed-step march under lax.scan (no gradient
+    tracking); backward differentiates the hit distance by the implicit function theorem, s(o + t d) = 0 =>
+    dt/do = -grad s / (grad s . d), dt/dd = -t grad s / (grad s . d), zero for rays that miss. This avoids both the
+    cost of differentiating through the march and a NaN produced by scan's transpose in some JAX versions."""
+
+    def _forward(o, d, t0, t_max, oh):
+        t = jnp.full(d.shape[:-1], t0)
+
+        def body(t, _):
+            s = sdf_oh(oh, o + t[..., None] * d)
+            return jnp.minimum(t + jnp.maximum(s, 0.0), t_max), None
+
+        t, _ = lax.scan(body, t, None, length=steps)
+        return t
+
+    @jax.custom_vjp
+    def march(o, d, t0, t_max, oh):
+        return _forward(o, d, t0, t_max, oh)
+
+    def fwd(o, d, t0, t_max, oh):
+        t = _forward(o, d, t0, t_max, oh)
+        return t, (o, d, t, t_max, oh)
+
+    def bwd(res, ct):
+        o, d, t, t_max, oh = res
+        p = o + t[..., None] * d
+        g = jax.vmap(jax.vmap(jax.grad(lambda q: sdf_oh(oh, q))))(p)
+        s = sdf_oh(oh, p)
+        hit = (s < HIT_EPS) & (t < t_max - 1e-4)
+        denom = jnp.sum(g * d, -1)
+        denom = jnp.where(jnp.abs(denom) < 1e-3, jnp.where(denom < 0, -1e-3, 1e-3), denom)
+        dt_do = jnp.where(hit[..., None], -g / denom[..., None], 0.0)
+        dt_dd = jnp.where(hit[..., None], -t[..., None] * g / denom[..., None], 0.0)
+        return (jnp.sum(ct[..., None] * dt_do, axis=(0, 1)), ct[..., None] * dt_dd,
+                jnp.zeros(()), jnp.zeros(()), jnp.zeros_like(oh))
+
+    march.defvjp(fwd, bwd)
+    return march
+
+
+_MARCH = {}
+
+
+def march_fn(steps):
+    if steps not in _MARCH:
+        _MARCH[steps] = make_march(steps)
+    return _MARCH[steps]
 
 
 def pixel_rays(cfg, fwd, right, up):
@@ -95,21 +151,16 @@ def render_clean(cls, rel_pos, q_obj, fwd, right, up, light, cfg):
     o = Rt @ (-rel_pos)                                           # camera position in the Object frame
     d = jnp.einsum("ij,hwj->hwi", Rt, dirs)
     t0 = jnp.maximum(_norm(o) - 2.0, 0.0)
-    t_max = _norm(o) + 4.0                      # beyond this the ray has passed the Object: cap keeps p bounded (finite gradients)
-    t = jnp.full((cfg.img, cfg.img), t0)
-
-    def march(t, _):
-        s = sdf(cls, o + t[..., None] * d)
-        return jnp.minimum(t + jnp.maximum(s, 0.0), t_max), None
-
-    t, _ = lax.scan(march, t, None, length=cfg.march_steps)
+    t_max = _norm(o) + 4.0                                        # beyond this the ray has passed the Object
+    oh = jax.nn.one_hot(cls, N_CLASSES)
+    t = march_fn(cfg.march_steps)(o, d, t0, t_max, oh)
     p = o + t[..., None] * d
-    s = sdf(cls, p)
-    hit = s < 0.03
+    s = sdf_oh(oh, p)
+    hit = s < HIT_EPS
     e = 1e-3
     ex, ey, ez = jnp.array([e, 0, 0]), jnp.array([0, e, 0]), jnp.array([0, 0, e])
-    n = jnp.stack([sdf(cls, p + ex) - sdf(cls, p - ex), sdf(cls, p + ey) - sdf(cls, p - ey),
-                   sdf(cls, p + ez) - sdf(cls, p - ez)], -1)
+    n = jnp.stack([sdf_oh(oh, p + ex) - sdf_oh(oh, p - ex), sdf_oh(oh, p + ey) - sdf_oh(oh, p - ey),
+                   sdf_oh(oh, p + ez) - sdf_oh(oh, p - ez)], -1)
     n = n / _norm(n)[..., None]
     n_world = jnp.einsum("ij,hwj->hwi", Rt.T, n)
     lam = jnp.maximum(jnp.sum(n_world * light, -1), 0.0)

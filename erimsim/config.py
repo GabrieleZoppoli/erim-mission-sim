@@ -92,8 +92,20 @@ class ExpCfg:
     J_ref: int = 5
     rl_steps: int = 50_000_000
     rl_seeds: tuple = (0, 1, 2)
+    rl_envs: int = 1024
+    rl_unroll: int = 32
     sample_missions: int = 20
     stage_log_missions: int = 50
+    # E2 (rate sweep): smaller trainings, one-hidden-layer single networks as in the theorem
+    e2_seeds: tuple = (0, 1, 2)
+    e2_est_steps: int = 8000
+    e2_pol_steps: int = 600
+    e2_cnn_steps: int = 5000
+    e2_M_test: int = 200
+    # E3 (dual effect): policy search with the renderer and the recogniser in the loop
+    e3_pol_steps: int = 2000
+    e3_batch: int = 128
+    e3_seeds: tuple = (0, 1, 2)
 
 
 @dataclass(frozen=True)
@@ -120,6 +132,22 @@ def smoke(c: Cfg) -> Cfg:
         train=replace(c.train, n_train_missions=16, T_train=40, est_steps=30, est_bs=64, cnn_steps=30, cnn_bs=32,
                       pol_steps=10, pol_batch=8, pol_H=20, pol_restarts=1, pol_curriculum_start=10),
         exp=replace(c.exp, M_eval=8, seeds=(0,), eps_scales=(0.5, 1.0), T_cons=(4,), t_hat=5, lambdas=(0.0, 1.0),
-                    n_grid=(8, 16), M_grid=(8, 16), J_grid=(2,), n_ref=16, M_ref=16, J_ref=2, rl_steps=2000, rl_seeds=(0,),
-                    sample_missions=2, stage_log_missions=2),
+                    n_grid=(8, 16), M_grid=(8, 16), J_grid=(2,), n_ref=16, M_ref=16, J_ref=2, rl_steps=512, rl_seeds=(0,),
+                    rl_envs=8, rl_unroll=8, sample_missions=2, stage_log_missions=2,
+                    e2_seeds=(0,), e2_est_steps=20, e2_pol_steps=5, e2_cnn_steps=20, e2_M_test=8,
+                    e3_pol_steps=4, e3_batch=4, e3_seeds=(0,)),
+    )
+
+
+def mini(c: Cfg) -> Cfg:
+    """Intermediate sizes for a CPU sanity run (tens of minutes): enough training to see the behaviour."""
+    return Cfg(
+        sim=replace(c.sim, T=150, img=32, march_steps=24),
+        model=replace(c.model, n_hidden=64, ensemble=3, cnn_J=3, cnn_ch=(8, 16, 16), cnn_fc=32),
+        train=replace(c.train, n_train_missions=60, T_train=100, est_steps=2000, cnn_steps=1500, cnn_bs=64,
+                      pol_steps=300, pol_batch=64, pol_H=150, pol_restarts=1, pol_curriculum_start=50),
+        exp=replace(c.exp, M_eval=40, seeds=(0,), rl_steps=200_000, rl_seeds=(0,), rl_envs=64, rl_unroll=32,
+                    sample_missions=5, stage_log_missions=10, e2_seeds=(0,), e2_est_steps=1500, e2_pol_steps=150,
+                    e2_cnn_steps=800, e2_M_test=40, n_grid=(8, 32, 128), M_grid=(20, 60), J_grid=(2, 3),
+                    n_ref=128, M_ref=60, J_ref=3, e3_pol_steps=150, e3_batch=32, e3_seeds=(0,)),
     )
