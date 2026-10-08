@@ -55,16 +55,16 @@ If the streams were launched from an earlier commit, do not check out the new on
 sibling directory and run the E3 line from there with the same `--out` once E1 has finished (E3 warm-starts from
 `E1/weights`).
 
-## 3b. Rerun after the policy-search fix of 8 Oct (commit `<POLFIX>`)
+## 3b. Rerun after the policy-search fix of 8 Oct (commit `d5b2976`)
 
 The first full-size run showed the ERIM policy search diverging to a non-finite loss late in training (all E1 seeds,
-one E2 seed in three); the code then evaluated the untrained initial policy. From commit `<POLFIX>` every step is
+one E2 seed in three); the code then evaluated the untrained initial policy. From commit `d5b2976` every step is
 checked (non-finite steps are skipped and halve the learning rate) and the policy returned is the best finite
 validation iterate; the log carries a line every val_every steps. Void outputs: E1 (ERIM rows, weights), E2
 `rates_est.csv` and `rates_ref.csv`, E3. Still valid: E1 baseline rows (cheap to regenerate), E2 `rates_cnn.csv`, E4.
 
 ```bash
-git clone https://github.com/GabrieleZoppoli/erim-mission-sim erim-mission-sim-fix && cd erim-mission-sim-fix && git checkout <POLFIX>
+git clone https://github.com/GabrieleZoppoli/erim-mission-sim erim-mission-sim-fix && cd erim-mission-sim-fix && git checkout d5b2976
 . ../erim-mission-sim/.venv/bin/activate            # the same environment
 pkill -f "shard 0/2"; pkill -f "shard 1/2"          # the void E2 estimator shards; the GPU1 wrapper then goes on to E4
 bash scripts/rerun_after_fix.sh $OUT                 # sets the void results aside, keeps cnn_* and E4
