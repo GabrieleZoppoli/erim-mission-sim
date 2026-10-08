@@ -49,7 +49,7 @@ def evaluate(agent, params, c, missions, method, seed, chunk=250, lam=0.0):
     T = cfg.T
     logs, term, total = sim.rollout_chunked(agent, params, missions, cfg, T, lam=lam, with_images=True, chunk=chunk)
     t_cal = min(100, T - 1)
-    eps0 = procedure.calibrate_eps(logs.proxies, t_cal, 0.5)
+    eps0 = procedure.calibrate_eps(logs.proxies, t_cal, 0.75)     # reference thresholds: 75th percentile of each proxy at stage 100
     grid = procedure.stop_grid(logs.proxies, eps0, ex.eps_scales, ex.T_cons, ex.t_hat)
     stop_def, stopped_def = grid[(1.0, int(ex.T_cons[len(ex.T_cons) // 2]))]
     M = missions.x0.shape[0]
