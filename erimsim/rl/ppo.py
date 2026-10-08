@@ -1,7 +1,14 @@
-"""PPO with a CNN encoder on the image and an MLP on the proprioceptive vector (y_own, y_obj, u_prev, t/T).
-Vectorised environments built from the same dynamics, sensors and renderer as the rest of the package; the reward
-is minus the stage cost scaled by 1/100; episodes last T stages and reset to fresh missions. Evaluation of the
-trained actor goes through sim.rollout (RLAgent), on the same missions as the other methods."""
+"""PPO with a CNN encoder on the image and an MLP on a normalised proprioceptive vector (relative Object position
+and range from the sensor, own attitude, velocities, t/T). Vectorised environments built from the same dynamics,
+sensors and renderer as the rest of the package; the reward is minus the stage cost scaled by 1/100 and, for the
+advantages and the value targets, by a running estimate of the return scale (the usual reward normalisation);
+episodes last T stages and reset to fresh missions. Evaluation of the trained actor goes through sim.rollout
+(RLAgent), on the same missions as the other methods.
+
+8 Oct 2026, after the first GPU run (final distance 526 m, reward spikes to -4500): the inputs were raw (absolute
+positions of tens of metres), the value loss on raw returns dominated the shared features, the pre-tanh mean could
+saturate the controls, and the evaluation fed u_prev = 0 where training fed the previous action. Now: normalised
+inputs without u_prev, return scaling, a small penalty on the pre-tanh mean, clipped log-std."""
 from typing import NamedTuple
 import jax
 import jax.numpy as jnp
@@ -9,7 +16,9 @@ from jax import lax
 from .. import dynamics3d as dyn, sensors, sim, models, render
 from ..sim import Summary
 
-PROPRIO = 13 + 3 + 6 + 1
+PROPRIO = 3 + 1 + 4 + 3 + 3 + 1
+LOG_STD_MIN, LOG_STD_MAX = -2.0, 0.5
+MEAN_PENALTY = 1e-3
 
 
 class PPOParams(NamedTuple):
@@ -37,7 +46,15 @@ def features(p, img, prop):
 
 def actor_critic(p, img, prop):
     h = features(p, img, prop)
-    return models.mlp(p.mean, h), p.log_std, models.mlp(p.value, h)[..., 0]
+    return models.mlp(p.mean, h), jnp.clip(p.log_std, LOG_STD_MIN, LOG_STD_MAX), models.mlp(p.value, h)[..., 0]
+
+
+def proprio(y_own, y_obj, t, cfg):
+    """Normalised proprioceptive input: Object position relative to the Machine (from the sensor) and range in
+    units of 10 m, own attitude, own velocities in units of 5 m/s and 2 rad/s, normalised time."""
+    rel = sensors.rae_to_rel(y_obj)
+    return jnp.concatenate([rel / 10.0, y_obj[0:1] / 10.0, y_own[3:7], y_own[7:10] / 5.0, y_own[10:13] / 2.0,
+                            jnp.array([t / cfg.T])])
 
 
 def to_control(a, cfg):
@@ -60,8 +77,7 @@ def env_reset(key, cfg):
 def env_obs(s, cfg):
     key = jax.random.split(dyn.stage_key(s.mission.key, s.t), 4)[0]
     y_own, y_obj, img = sim.observe(s.mission, s.x, s.z, s.t, key, cfg, True)
-    prop = jnp.concatenate([y_own, y_obj, s.u_prev, jnp.array([s.t / cfg.T])])
-    return img, prop
+    return img, proprio(y_own, y_obj, s.t, cfg)
 
 
 def env_step(s, a, key, cfg):
@@ -123,17 +139,20 @@ def train(key, cfg, mcfg, total_steps, n_envs, unroll, lr=3e-4, epochs=4, miniba
         ratio = jnp.exp(logp - logp_old)
         adv_n = (adv - adv.mean()) / (adv.std() + 1e-8)
         pg = -jnp.mean(jnp.minimum(ratio * adv_n, jnp.clip(ratio, 1 - clip, 1 + clip) * adv_n))
-        vl = jnp.mean((v - ret) ** 2)
+        vl = jnp.mean((v - ret) ** 2)                       # returns are in scaled units (see update)
         entropy = jnp.sum(log_std + 0.5 * jnp.log(2 * jnp.pi * jnp.e))
-        return pg + vcoef * vl - ent * entropy, (pg, vl)
+        reg = MEAN_PENALTY * jnp.mean(mean ** 2)             # keeps the pre-tanh mean away from saturation
+        return pg + vcoef * vl - ent * entropy + reg, (pg, vl)
 
     @jax.jit
-    def update(p, st, envs, key, i):
+    def update(p, st, envs, ret_var, key, i):
         kc, ku = jax.random.split(key)
         envs1, (s, a, logp, v, r, d) = collect(p, envs, kc)
         img_l, prop_l = obs_fn(envs1)
         _, _, last_v = jax.vmap(lambda i_, q: actor_critic(p, i_, q))(img_l, prop_l)
-        adv, ret = gae(r, v, d, last_v, gamma, lam)
+        scale = jnp.sqrt(ret_var + 1e-8)
+        adv, ret = gae(r / scale, v, d, last_v, gamma, lam)   # value network and advantages in scaled units
+        ret_var = jnp.where(i == 0, jnp.mean((ret * scale) ** 2), 0.99 * ret_var + 0.01 * jnp.mean((ret * scale) ** 2))
         flat = lambda x: x.reshape((unroll * n_envs,) + x.shape[2:])
         s_f = jax.tree_util.tree_map(flat, s)
         a_f, logp_f, adv_f, ret_f = flat(a), flat(logp), flat(adv), flat(ret)
@@ -154,15 +173,17 @@ def train(key, cfg, mcfg, total_steps, n_envs, unroll, lr=3e-4, epochs=4, miniba
             (p, st), aux = lax.scan(mini, (p, st), jnp.arange(minibatches))
             return (p, st), aux
         (p, st), aux = lax.scan(epoch, (p, st), jax.random.split(ku, epochs))
-        return p, st, envs1, jnp.mean(r), jnp.mean(d), aux
+        return p, st, envs1, ret_var, jnp.mean(r), jnp.mean(d), aux
 
     curve = []
+    ret_var = jnp.ones(())
     for i in range(n_updates):
-        p, st, envs, r_mean, d_mean, aux = update(p, st, envs, jax.random.fold_in(key, 10 + i), i)
+        p, st, envs, ret_var, r_mean, d_mean, aux = update(p, st, envs, ret_var, jax.random.fold_in(key, 10 + i), i)
         if i % log_every == 0 or i == n_updates - 1:
             curve.append({"update": i, "env_steps": (i + 1) * n_envs * unroll, "reward_mean": float(r_mean),
-                          "pg_loss": float(jnp.mean(aux[0])), "v_loss": float(jnp.mean(aux[1]))})
-            log(f"  ppo update {i}/{n_updates}: mean reward {float(r_mean):.4f}")
+                          "pg_loss": float(jnp.mean(aux[0])), "v_loss": float(jnp.mean(aux[1])),
+                          "return_scale": float(jnp.sqrt(ret_var))})
+            log(f"  ppo update {i}/{n_updates}: mean reward {float(r_mean):.4f}  return scale {float(jnp.sqrt(ret_var)):.3g}")
     return p, curve
 
 
@@ -186,8 +207,7 @@ class RLAgent:
     @classmethod
     def act(cls, params, sm, obs, t, key):
         y_own, y_obj, img = obs
-        prop = jnp.concatenate([y_own, y_obj, jnp.zeros(6), jnp.array([t / cls.cfg.T])])
-        mean, _, _ = actor_critic(params, img, prop)
+        mean, _, _ = actor_critic(params, img, proprio(y_own, y_obj, t, cls.cfg))
         return to_control(mean, cls.cfg)
 
 
