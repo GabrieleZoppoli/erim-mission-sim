@@ -38,7 +38,7 @@ that manuscript.
 
 ## Install
 
-Python ≥ 3.10. Three routes, in order of preference.
+Python 3.11–3.13 (jax 0.10.2 declares `Requires-Python >= 3.11`; 3.13 wheels exist for jaxlib and the CUDA plugin). If the system Python is older, build the virtual environment from any CPython 3.11–3.13 already present on the node. Three routes, in order of preference.
 
 ```bash
 python3 -m venv .venv && . .venv/bin/activate && pip install -U pip

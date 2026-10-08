@@ -4,7 +4,7 @@ For the operator who runs the study inside the university network. The code neve
 node beyond a working directory and two GPU indices. No placeholders remain.
 
 * Repository: `https://github.com/GabrieleZoppoli/erim-mission-sim` — commit `b727351` (the code of tag `v0.1`; the tag itself may not be on GitHub yet)
-* Hardware assumed: 2 × NVIDIA RTX A6000 48 GB, driver 550.x, CUDA 12.4; any Python ≥ 3.10.
+* Hardware assumed: 2 × NVIDIA RTX A6000 48 GB, driver 550.x, CUDA 12.4; Python 3.11–3.13 (jax 0.10.2 requires ≥ 3.11: if the system Python is older, build the venv from any CPython 3.11–3.13 present on the node, e.g. `/path/to/python3.13 -m venv .venv`).
 
 ## 0. Workspace (house rules: personal NVMe workspace, nothing on persistent project storage)
 
