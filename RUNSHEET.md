@@ -3,7 +3,7 @@
 For the operator who runs the study inside the university network. The code never needs to know anything about the
 node beyond a working directory and two GPU indices. No placeholders remain.
 
-* Repository: `https://github.com/GabrieleZoppoli/erim-mission-sim` — tag `v0.1`
+* Repository: `https://github.com/GabrieleZoppoli/erim-mission-sim` — commit `b727351` (the code of tag `v0.1`; the tag itself may not be on GitHub yet)
 * Hardware assumed: 2 × NVIDIA RTX A6000 48 GB, driver 550.x, CUDA 12.4; any Python ≥ 3.10.
 
 ## 0. Workspace (house rules: personal NVMe workspace, nothing on persistent project storage)
@@ -11,7 +11,7 @@ node beyond a working directory and two GPU indices. No placeholders remain.
 ```bash
 init_workspace PROJ_ERIM_SIM other simulation          # once; creates /data02/work/<user>/PROJ_ERIM_SIM/other/simulation/{dev/code,tmp,res,...}
 cd /data02/work/<user>/PROJ_ERIM_SIM/other/simulation/dev/code
-git clone https://github.com/GabrieleZoppoli/erim-mission-sim && cd erim-mission-sim && git checkout v0.1
+git clone https://github.com/GabrieleZoppoli/erim-mission-sim && cd erim-mission-sim && git checkout b727351
 python3 -m venv .venv && . .venv/bin/activate && pip install -U pip
 pip install -r requirements.txt && pip install "jax[cuda12]==0.10.2"      # route A; see README for routes B and C
 python3 -c "import jax; print(jax.devices())"                              # expect two CudaDevice entries
