@@ -20,7 +20,7 @@ def parse(argv=None):
     p.add_argument("--resume", action="store_true")
     p.add_argument("--shard", default=None, help="k/n: run units with index %% n == k")
     p.add_argument("--units", default=None, help="glob on unit ids")
-    p.add_argument("--seeds", default=None, help="comma-separated seeds overriding the config")
+    p.add_argument("--seeds", default=None, help="comma-separated seeds overriding the config (E1: seeds, E2: e2_seeds, E3: e3_seeds, E4: rl_seeds)")
     p.add_argument("--list", action="store_true", help="print the units and exit")
     return p.parse_args(argv)
 
@@ -41,8 +41,9 @@ def main(argv=None):
         c = smoke(c)
     elif a.mini:
         c = mini(c)
-    if a.seeds:
-        c = replace(c, exp=replace(c.exp, seeds=tuple(int(s) for s in a.seeds.split(","))))
+    if a.seeds:                                   # the seed tuple that defines this experiment's units
+        field = {"E1": "seeds", "E2": "e2_seeds", "E3": "e3_seeds", "E4": "rl_seeds"}[a.exp]
+        c = replace(c, exp=replace(c.exp, **{field: tuple(int(s) for s in a.seeds.split(","))}))
     mod = {"E1": "e1_main", "E2": "e2_rates", "E3": "e3_dual", "E4": "e4_rl"}[a.exp]
     exp = __import__(f"erimsim.experiments.{mod}", fromlist=["units", "run_unit"])
     out = os.path.join(a.out, a.exp)
