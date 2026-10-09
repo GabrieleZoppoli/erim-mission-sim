@@ -23,6 +23,7 @@ def parse(argv=None):
     p.add_argument("--gpu", default=None, help="CUDA_VISIBLE_DEVICES value")
     p.add_argument("--smoke", action="store_true", help="the smoke configuration (for a run produced with --smoke)")
     p.add_argument("--mini", action="store_true")
+    p.add_argument("--hard", action="store_true", help="hard-recognition regime (config.hard), for a run produced with --hard")
     return p.parse_args(argv)
 
 
@@ -34,7 +35,7 @@ def main(argv=None):
     import numpy as np
     import jax.numpy as jnp
     from .. import io
-    from ..config import preset, smoke, mini
+    from ..config import preset, smoke, mini, hard
     from ..erim import agent as eagent
     from . import common, e1_main
 
@@ -43,6 +44,8 @@ def main(argv=None):
         c = smoke(c)
     elif a.mini:
         c = mini(c)
+    if a.hard:
+        c = hard(c)
     e3 = os.path.join(a.out, "E3")
     e1 = os.path.join(a.out, "E1")
     files = sorted(glob.glob(os.path.join(e3, "weights", "dual_l*_s*.npz")))

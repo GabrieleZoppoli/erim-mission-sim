@@ -15,6 +15,7 @@ def parse(argv=None):
     p.add_argument("--out", required=True)
     p.add_argument("--smoke", action="store_true", help="tiny sizes, CPU, under two minutes")
     p.add_argument("--mini", action="store_true", help="intermediate sizes for a CPU sanity run")
+    p.add_argument("--hard", action="store_true", help="hard-recognition regime (config.hard): small, noisy Object image at the initial range")
     p.add_argument("--gpu", default=None, help="CUDA_VISIBLE_DEVICES value")
     p.add_argument("--mem-fraction", default=None, help="XLA_PYTHON_CLIENT_MEM_FRACTION (e.g. 0.45 for two jobs per GPU)")
     p.add_argument("--resume", action="store_true")
@@ -34,13 +35,15 @@ def main(argv=None):
         os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"] = str(a.mem_fraction)
     import jax
     from . import io
-    from .config import preset, smoke, mini
+    from .config import preset, smoke, mini, hard
     from dataclasses import replace
     c = preset(a.exp)
     if a.smoke:
         c = smoke(c)
     elif a.mini:
         c = mini(c)
+    if a.hard:
+        c = hard(c)
     if a.seeds:                                   # the seed tuple that defines this experiment's units
         field = {"E1": "seeds", "E2": "e2_seeds", "E3": "e3_seeds", "E4": "rl_seeds"}[a.exp]
         c = replace(c, exp=replace(c.exp, **{field: tuple(int(s) for s in a.seeds.split(","))}))
@@ -64,7 +67,7 @@ def main(argv=None):
         print(line, flush=True)
         logf.write(line + "\n"); logf.flush()
 
-    io.write_json(os.path.join(out, "meta.json"), {"exp": a.exp, "smoke": a.smoke, "config": c.to_json(), "git": io.git_hash(),
+    io.write_json(os.path.join(out, "meta.json"), {"exp": a.exp, "smoke": a.smoke, "hard": a.hard, "config": c.to_json(), "git": io.git_hash(),
                                                    "device": io.device_info(), "argv": sys.argv, "started": time.strftime("%Y-%m-%d %H:%M:%S")})
     log(f"{a.exp}: {len(units)} units on {io.device_info()}")
     failed = 0

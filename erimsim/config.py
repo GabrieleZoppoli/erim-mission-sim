@@ -139,6 +139,14 @@ def smoke(c: Cfg) -> Cfg:
     )
 
 
+def hard(c: Cfg) -> Cfg:
+    """Hard-recognition regime for the dual-effect follow-up (9 Oct): same dynamics, sensors, cost and training sizes,
+    but the Object is small and noisy in the image at the initial range (apparent radius k_focal * img / r: 2-4 px at
+    8-12 m instead of 11-16 px; pixel noise and blur grow three and two times faster with range), so that recognition
+    needs the approach instead of being settled at stage 0."""
+    return replace(c, sim=replace(c.sim, k_focal=0.5, sd_px_r=0.15, blur_r=0.15))
+
+
 def mini(c: Cfg) -> Cfg:
     """Intermediate sizes for a CPU sanity run (tens of minutes): enough training to see the behaviour."""
     return Cfg(

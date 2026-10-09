@@ -98,6 +98,22 @@ It writes `E3/results_control_cost.csv` (method `dual_l<λ>_c0`, plus `lambda`, 
 `control cost`, `entropy_sum` and `implied total`, which must equal the unit's cost in the E3 log. Return the CSV
 and the log with the rest.
 
+## 3e. Optional follow-up: the dual effect in a hard-recognition regime (9 Oct, on Gabriele's word)
+
+In the main regime the recogniser is confident from stage 0 in the median mission, so the λ·entropy term has nothing
+to trade and E3 finds no measurable dual effect. `--hard` (config.hard) keeps dynamics, sensors, cost and training
+sizes and makes the Object small and noisy in the image at the initial range (k_focal 0.5, sd_px_r 0.15,
+blur_r 0.15). One seed, its own output directory, about 4.6 GPU-hours on the free GPU:
+
+```bash
+OUTH=$OUT/hard; mkdir -p $OUTH
+python3 -m erimsim --exp E1 --out $OUTH --gpu 1 --hard --seeds 0 > $OUTH/e1_hard.log 2>&1              # train_s0, eval_baseline, eval_erim_s0: about 30 min
+python3 -m erimsim --exp E3 --out $OUTH --gpu 1 --hard --seeds 0 --units 'dual_l[01]_s0' > $OUTH/e3_hard.log 2>&1   # lambda 0 and 1, warm start from $OUTH/E1: about 2 h each
+python3 -m erimsim.experiments.e3_reeval --out $OUTH --gpu 1 --hard > $OUTH/e3_reeval_hard.log 2>&1   # about 2 min
+```
+Return `$OUTH` without weights (E1 results and training rows, E3 results, results_control_cost.csv, logs, meta.json
+with `"hard": true`), as `results/hard/`.
+
 ## 4. What to return (small files only; weights are optional)
 
 ```bash
