@@ -84,6 +84,20 @@ before) and `ppo_best`; `ppo_best.csv` records the chosen update and `weights/pp
 Use the new commit for every E4 unit started from now on; a seed already finished with `9af9f53` has `ppo` rows only
 and can be rerun later for its `ppo_best` rows if the budget allows (about 3.5 h per seed).
 
+## 3d. E3 post-processing: control cost without the information term (9 Oct)
+
+`E3/results.csv` reports `total_cost` including the information term λ·Σ_t entropy(posterior_t), because the
+evaluation uses the same cost as the training. To separate control cost from information term, re-evaluate the nine
+dual policies with λ = 0 on the same missions after the GPU0 chain has finished (about 40 s per policy on an A6000):
+
+```bash
+python3 -m erimsim.experiments.e3_reeval --out $OUT --gpu 0 > $OUT/e3_reeval.log 2>&1
+```
+It writes `E3/results_control_cost.csv` (method `dual_l<λ>_c0`, plus `lambda`, `entropy_sum`, `entropy_mean`,
+`entropy_T`) and one done marker per policy under `E3/units/`; rerunnable. The log line per unit prints
+`control cost`, `entropy_sum` and `implied total`, which must equal the unit's cost in the E3 log. Return the CSV
+and the log with the rest.
+
 ## 4. What to return (small files only; weights are optional)
 
 ```bash
