@@ -44,17 +44,30 @@ if (0 %in% lams && length(lams) > 1) {
       ci <- paired_boot(Al[[m]], A0[[m]]); data.frame(lambda = l, metric = m, mean_diff_vs_lambda0 = ci[1], ci_low = ci[2], ci_high = ci[3]) })) }))
   write.csv(pd, file.path(e3, "tables", "e3_paired_vs_lambda0.csv"), row.names = FALSE); print(pd)
 }
-## figure: the trade-off, information collected (lower entropy sum) against control cost, per lambda and seed
+## figure: (left) per-seed paths across lambda in the plane entropy sum / control cost; (right) paired differences
+## against lambda = 0 with bootstrap CIs, for the control cost and the entropy sum
 if (!is.null(C)) {
   M <- aggregate(cbind(control_cost, entropy_sum) ~ lambda + seed, data = D, FUN = mean)
   Ml <- aggregate(cbind(control_cost, entropy_sum) ~ lambda, data = D, FUN = mean)
-  png(file.path(e3, "figures", "e3_tradeoff.png"), width = 900, height = 600, res = 130); par(mar = c(4.5, 4.5, 3, 1))
+  png(file.path(e3, "figures", "e3_tradeoff.png"), width = 1400, height = 600, res = 130); par(mfrow = c(1, 2), mar = c(4.5, 4.5, 3, 1))
   cols <- setNames(c("grey40", "steelblue", "darkorange", "firebrick", "darkgreen")[seq_along(lams)], lams)
-  plot(M$entropy_sum, M$control_cost, pch = 1, col = cols[as.character(M$lambda)], xlab = "sum over stages of the posterior entropy (nats)",
-       ylab = "control cost (squared distance + control effort)", main = "Dual effect: information collected against control cost")
-  points(Ml$entropy_sum, Ml$control_cost, pch = 16, cex = 1.6, col = cols[as.character(Ml$lambda)])
-  o <- order(Ml$lambda); lines(Ml$entropy_sum[o], Ml$control_cost[o], col = "grey60", lty = 2)
+  plot(M$entropy_sum, M$control_cost, type = "n", xlab = "sum over stages of the posterior entropy (nats)",
+       ylab = "control cost (squared distance + control effort)", main = "Per seed: lambda 0 -> 0.1 -> 1")
+  for (sd_ in unique(M$seed)) { Ms <- M[M$seed == sd_, ]; Ms <- Ms[order(Ms$lambda), ]; lines(Ms$entropy_sum, Ms$control_cost, col = "grey70"); points(Ms$entropy_sum, Ms$control_cost, pch = 16, col = cols[as.character(Ms$lambda)]) }
+  o <- order(Ml$lambda); lines(Ml$entropy_sum[o], Ml$control_cost[o], col = "black", lwd = 2); points(Ml$entropy_sum, Ml$control_cost, pch = 21, bg = cols[as.character(Ml$lambda)], cex = 1.8)
   legend("topright", legend = paste("lambda =", lams), col = cols, pch = 16, bty = "n")
+  if (exists("pd")) {
+    P <- pd[pd$metric %in% c("control_cost", "entropy_sum"), ]; P$x <- as.numeric(factor(P$lambda)) + ifelse(P$metric == "control_cost", -0.12, 0.12)
+    par(mar = c(4.5, 4.5, 3, 4.5)); yl <- range(c(P$ci_low[P$metric == "control_cost"], P$ci_high[P$metric == "control_cost"], 0))
+    plot(P$x[P$metric == "control_cost"], P$mean_diff_vs_lambda0[P$metric == "control_cost"], xlim = c(0.5, length(unique(P$lambda)) + 0.5), ylim = yl, pch = 16, xaxt = "n",
+         xlab = "lambda", ylab = "control cost minus lambda = 0 (same missions)", main = "Paired differences against lambda = 0"); abline(h = 0, lty = 3)
+    axis(1, at = seq_along(unique(P$lambda)), labels = unique(P$lambda))
+    with(P[P$metric == "control_cost", ], arrows(x, ci_low, x, ci_high, angle = 90, code = 3, length = 0.04))
+    par(new = TRUE); E_ <- P[P$metric == "entropy_sum", ]; ye <- range(c(E_$ci_low, E_$ci_high, 0))
+    plot(E_$x, E_$mean_diff_vs_lambda0, xlim = c(0.5, length(unique(P$lambda)) + 0.5), ylim = ye, pch = 17, col = "steelblue", axes = FALSE, xlab = "", ylab = "")
+    arrows(E_$x, E_$ci_low, E_$x, E_$ci_high, angle = 90, code = 3, length = 0.04, col = "steelblue"); axis(4, col = "steelblue", col.axis = "steelblue"); mtext("entropy sum minus lambda = 0 (nats)", side = 4, line = 3, col = "steelblue")
+    legend("topleft", legend = c("control cost (left axis)", "entropy sum (right axis)"), pch = c(16, 17), col = c("black", "steelblue"), bty = "n")
+  }
   dev.off()
 }
 ## sample trajectories: posterior of the true class and distance along the mission, by lambda

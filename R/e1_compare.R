@@ -3,7 +3,7 @@
 source(file.path(dirname(sub("--file=", "", grep("--file=", commandArgs(), value = TRUE))), "common.R"))
 out <- args_out(); e1 <- file.path(out, "E1")
 D <- read.csv(file.path(e1, "results.csv"), stringsAsFactors = FALSE)
-D4 <- read_csv_if(file.path(out, "E4", "results.csv")); if (!is.null(D4)) D <- rbind(D[, intersect(names(D), names(D4))], D4[, intersect(names(D), names(D4))])
+D <- D[D$method %in% c("baseline", "erim"), ]          # the two chains; the deep-RL baseline is compared in e4_curves.R
 D$stop_t_fin <- ifelse(D$stopped == 1, D$stop_t, NA)
 metrics <- c(final_dist = "final distance (m)", min_dist = "minimum distance (m)", cost_per_stage = "cost per stage",
              err_zp_T = "Object position error at T (m)", err_zv_T = "Object velocity error at T", err_f_T = "f error at T",
@@ -33,7 +33,7 @@ if (all(c("erim", "baseline") %in% D$method)) {
 png(file.path(e1, "figures", "e1_boxplots.png"), width = 1600, height = 500, res = 130)
 par(mfrow = c(1, 4), mar = c(6, 4, 3, 1))
 for (m in c("final_dist", "cost_per_stage", "err_zp_T", "err_f_T"))
-  boxplot(D[[m]] ~ D$method, xlab = "", ylab = m, main = metrics[m], las = 2, col = c("grey85", "lightsteelblue", "wheat")[seq_along(unique(D$method))])
+  boxplot(D[[m]] ~ D$method, xlab = "", ylab = m, main = metrics[m], las = 2, col = c("grey85", "lightsteelblue"), outline = FALSE)
 dev.off()
 png(file.path(e1, "figures", "e1_stop_hist.png"), width = 1200, height = 450, res = 130)
 ms <- unique(D$method); par(mfrow = c(1, length(ms)), mar = c(4, 4, 3, 1))
