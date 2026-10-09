@@ -8,7 +8,13 @@ episodes last T stages and reset to fresh missions. Evaluation of the trained ac
 8 Oct 2026, after the first GPU run (final distance 526 m, reward spikes to -4500): the inputs were raw (absolute
 positions of tens of metres), the value loss on raw returns dominated the shared features, the pre-tanh mean could
 saturate the controls, and the evaluation fed u_prev = 0 where training fed the previous action. Now: normalised
-inputs without u_prev, return scaling, a small penalty on the pre-tanh mean, clipped log-std."""
+inputs without u_prev, return scaling, a small penalty on the pre-tanh mean, clipped log-std.
+
+9 Oct 2026, during the second GPU run (the return-scale estimate jumped twentyfold in 20 updates around update
+450, the signature of a few saturation episodes): train() now also keeps the parameters of the update with the
+highest smoothed training reward (EMA over about ten updates, after a short warm-up) and returns them next to
+the final ones. The bookkeeping happens in the Python loop, outside the jitted update, so the training
+trajectory for a given seed is the same as before; E4 evaluates both iterates ("ppo" = final, "ppo_best")."""
 from typing import NamedTuple
 import jax
 import jax.numpy as jnp
@@ -19,6 +25,8 @@ from ..sim import Summary
 PROPRIO = 3 + 1 + 4 + 3 + 3 + 1
 LOG_STD_MIN, LOG_STD_MAX = -2.0, 0.5
 MEAN_PENALTY = 1e-3
+BEST_SMOOTH = 0.9          # EMA factor of the training reward used to pick the best iterate (about ten updates)
+BEST_WARMUP = 10           # updates ignored before the first best-iterate candidate (min(10, n_updates // 2))
 
 
 class PPOParams(NamedTuple):
@@ -177,14 +185,21 @@ def train(key, cfg, mcfg, total_steps, n_envs, unroll, lr=3e-4, epochs=4, miniba
 
     curve = []
     ret_var = jnp.ones(())
+    warm = min(BEST_WARMUP, n_updates // 2)
+    p_best, best_i, best_s, r_s = p, 0, -float("inf"), None
     for i in range(n_updates):
         p, st, envs, ret_var, r_mean, d_mean, aux = update(p, st, envs, ret_var, jax.random.fold_in(key, 10 + i), i)
+        r_now = float(r_mean)
+        r_s = r_now if r_s is None else BEST_SMOOTH * r_s + (1 - BEST_SMOOTH) * r_now
+        if i >= warm and r_s > best_s:                      # best iterate by smoothed training reward; no effect on training
+            p_best, best_i, best_s = p, i, r_s
         if i % log_every == 0 or i == n_updates - 1:
-            curve.append({"update": i, "env_steps": (i + 1) * n_envs * unroll, "reward_mean": float(r_mean),
+            curve.append({"update": i, "env_steps": (i + 1) * n_envs * unroll, "reward_mean": r_now,
                           "pg_loss": float(jnp.mean(aux[0])), "v_loss": float(jnp.mean(aux[1])),
                           "return_scale": float(jnp.sqrt(ret_var))})
-            log(f"  ppo update {i}/{n_updates}: mean reward {float(r_mean):.4f}  return scale {float(jnp.sqrt(ret_var)):.3g}")
-    return p, curve
+            log(f"  ppo update {i}/{n_updates}: mean reward {r_now:.4f}  return scale {float(jnp.sqrt(ret_var)):.3g}")
+    best = {"params": p_best, "update": best_i, "reward_smooth": best_s, "n_updates": n_updates}
+    return p, curve, best
 
 
 class RLAgent:

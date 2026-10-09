@@ -6,6 +6,9 @@ ensure_dir(file.path(e4, "figures")); ensure_dir(file.path(e4, "tables"))
 png(file.path(e4, "figures", "e4_learning_curve.png"), width = 900, height = 450, res = 130); par(mar = c(4, 4, 3, 1))
 plot(NA, xlim = range(L$env_steps), ylim = range(L$reward_mean), xlab = "environment steps", ylab = "mean reward per step", main = "PPO from pixels")
 for (s in unique(L$seed)) lines(L$env_steps[L$seed == s], L$reward_mean[L$seed == s], col = s + 1, lwd = 2)
+B <- read_csv_if(file.path(e4, "ppo_best.csv"))   # best iterate per seed (smoothed training reward), when the run recorded it
+if (!is.null(B)) for (k in seq_len(nrow(B))) { s <- B$seed[k]; Ls <- L[L$seed == s, ]; i <- which.min(abs(Ls$update - B$best_update[k]))
+  points(Ls$env_steps[i], Ls$reward_mean[i], col = s + 1, pch = 19); abline(v = Ls$env_steps[i], col = s + 1, lty = 3) }
 dev.off()
 D4 <- read.csv(file.path(e4, "results.csv"), stringsAsFactors = FALSE); D1 <- read_csv_if(file.path(out, "E1", "results.csv"))
 D <- if (!is.null(D1)) rbind(D1[, intersect(names(D1), names(D4))], D4[, intersect(names(D1), names(D4))]) else D4

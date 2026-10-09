@@ -74,6 +74,16 @@ nohup bash scripts/run_gpu1.sh $OUT > $OUT/gpu1_rerun.log 2>&1 &     # when E4 h
 A training unit now prints `policy trained: best validation loss ... (initial ..., restart r, step k, n skipped steps)`
 and `training.csv` carries `pol_improved`; a unit with `pol_improved = False` is a failure to report, not a result.
 
+## 3c. E4 best-iterate evaluation (9 Oct, commit after `9af9f53`)
+
+During the second E4 run the return-scale estimate jumped twentyfold around update 450 (a few saturation episodes
+in one batch). The training algorithm is unchanged; `ppo.train` now also keeps the parameters of the update with the
+highest smoothed training reward (EMA over about ten updates), outside the jitted update, so a given seed follows the
+same trajectory as before. E4 evaluates both iterates on the same 1000 missions: method `ppo` (final parameters, as
+before) and `ppo_best`; `ppo_best.csv` records the chosen update and `weights/ppo_best_s<seed>.npz` the parameters.
+Use the new commit for every E4 unit started from now on; a seed already finished with `9af9f53` has `ppo` rows only
+and can be rerun later for its `ppo_best` rows if the budget allows (about 3.5 h per seed).
+
 ## 4. What to return (small files only; weights are optional)
 
 ```bash
