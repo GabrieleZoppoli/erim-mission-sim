@@ -62,8 +62,14 @@ class ExploreParams(NamedTuple):
     random_flag: jnp.ndarray
 
 
-def generate(key, cfg, mcfg, n_missions, T, p_random=1 / 3):
-    """Returns a Data pytree with n_missions * T rows (images are not stored; poses are)."""
+GENERATE_CHUNK = 400      # missions per vmapped rollout; the device memory of the exploration rollouts grows with it
+
+
+def generate(key, cfg, mcfg, n_missions, T, p_random=1 / 3, chunk=GENERATE_CHUNK):
+    """Returns a Data pytree with n_missions * T rows (images are not stored; poses are). The rollouts run in chunks
+    of `chunk` missions (9 Oct 2026: one vmapped rollout over the 3200 missions of the E2 reference training asked
+    the GPU for 29 GiB; 400 missions, the E1 training size, is known to fit); the rows are the same, in the same
+    order, whatever the chunk size."""
     missions = dyn.sample_missions(key, n_missions, cfg)
     flags = jax.random.uniform(jax.random.fold_in(key, 99), (n_missions,)) < p_random
     base = bagent.make_params(cfg)
@@ -80,8 +86,13 @@ def generate(key, cfg, mcfg, n_missions, T, p_random=1 / 3):
         _, _, _, ex = sim.rollout_one(Explore, p, m, cfg, T, 0.0, with_images=False, extra=extra)
         return ex
 
-    ex = jax.vmap(one)(missions, params)
-    flat = jax.tree_util.tree_map(lambda a: a.reshape((-1,) + a.shape[2:]), ex)
+    run = jax.jit(jax.vmap(one))
+    parts = []
+    for s in range(0, n_missions, max(1, chunk)):
+        sel = lambda a: a[s:s + chunk]
+        ex = run(jax.tree_util.tree_map(sel, missions), jax.tree_util.tree_map(sel, params))
+        parts.append(jax.tree_util.tree_map(lambda a: a.reshape((-1,) + a.shape[2:]), ex))
+    flat = jax.tree_util.tree_map(lambda *xs: jnp.concatenate(xs, 0), *parts)
     return Data(*flat)
 
 
