@@ -10,10 +10,10 @@ L$cost_per_stage <- pmax(-100 * L$reward_mean, 1e-2)
 ensure_dir(file.path(e4, "figures")); ensure_dir(file.path(e4, "tables"))
 ids <- unique(L$id); cols <- setNames(c("firebrick", "steelblue", "darkorange", "darkgreen", "purple")[seq_along(ids)], ids)
 png(file.path(e4, "figures", "e4_learning_curve.png"), width = 1400, height = 520, res = 130); par(mfrow = c(1, 2), mar = c(4, 4.5, 3, 1))
-plot(NA, xlim = range(L$update), ylim = range(L$cost_per_stage), log = "y", xlab = "PPO update", ylab = "training cost per stage (log)", main = "PPO from pixels: whole run")
+plot(NA, xlim = range(L$update), ylim = c(min(3, min(L$cost_per_stage)), max(L$cost_per_stage)), log = "y", xlab = "PPO update", ylab = "training cost per stage (log)", main = "PPO from pixels: whole run")
 for (i in ids) lines(L$update[L$id == i], L$cost_per_stage[L$id == i], col = cols[i], lwd = 1.5)
 if (!is.null(Bst)) for (k in seq_len(nrow(Bst))) { Ls <- L[L$id == Bst$id[k], ]; j <- which.min(abs(Ls$update - Bst$best_update[k])); points(Ls$update[j], Ls$cost_per_stage[j], pch = 21, bg = "white", col = cols[Bst$id[k]], cex = 1.4) }
-abline(h = 5.09, lty = 3); text(max(L$update), 5.09, "ERIM policy, evaluation", pos = 3, cex = 0.75, adj = 1)
+abline(h = 5.09, lty = 3); text(0, 5.09, "ERIM policy at evaluation (5.09)", pos = 3, cex = 0.75, adj = 0)
 legend("topleft", legend = c(ids, "best iterate"), col = c(cols[ids], "black"), lwd = c(rep(1.5, length(ids)), NA), pch = c(rep(NA, length(ids)), 21), bty = "n", cex = 0.85)
 Z <- L[L$update <= 600, ]
 plot(NA, xlim = c(0, 600), ylim = range(Z$cost_per_stage), log = "y", xlab = "PPO update", ylab = "training cost per stage (log)", main = "First 600 updates")
