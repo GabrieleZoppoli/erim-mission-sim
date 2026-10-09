@@ -1,0 +1,19 @@
+[21:51:21] E2: 1 units on {'jax': '0.10.2', 'backend': 'gpu', 'device': 'cuda:0', 'n_devices': 1}
+[21:51:21] start ref
+[21:51:50]     policy search: 600 steps x 1 restarts, batch 128, horizons [50, 133, 216, 300], validation loss of the initial policy 647.747
+[21:51:57]     restart 0 step 49 h=50: loss 48.504 |g| 29.6 validation@300 20779.693 (best 647.747)
+[21:51:59]     restart 0 step 99 h=50: loss 32.066 |g| 7.78 validation@300 23835.494 (best 647.747)
+[21:52:01]     restart 0 step 149 h=50: loss 33.182 |g| 6.41 validation@300 4507.864 (best 647.747)
+[21:52:09]     restart 0 step 199 h=133: loss 12.752 |g| 1.85 validation@300 5.244 (best 5.244)
+[21:52:12]     restart 0 step 249 h=133: loss 12.088 |g| 2.73 validation@300 5.220 (best 5.220)
+[21:52:15]     restart 0 step 299 h=133: loss 12.077 |g| 1.18 validation@300 5.209 (best 5.209)
+[21:52:25]     restart 0 step 349 h=216: loss 7.350 |g| 0.786 validation@300 5.206 (best 5.206)
+[21:52:30]     restart 0 step 399 h=216: loss 7.223 |g| 1.22 validation@300 5.202 (best 5.202)
+[21:52:35]     restart 0 step 449 h=216: loss 7.315 |g| 0.98 validation@300 5.199 (best 5.199)
+[21:52:46]     restart 0 step 499 h=300: loss 5.410 |g| 0.477 validation@300 5.199 (best 5.199)
+[21:52:53]     restart 0 step 549 h=300: loss 5.554 |g| 2.83 validation@300 5.198 (best 5.198)
+[21:52:59]     restart 0 step 599 h=300: loss 5.115 |g| 0.5 validation@300 5.198 (best 5.198)
+E1009 21:53:19.791339 1564494 cuda_timer.cc:88] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E1009 21:53:19.935036 1564494 cuda_timer.cc:88] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+[21:54:42] done  ref in 201s: {'cost_ref': 1579.7847900390625, 'acc_ref': 0.4375}
+[21:54:42] finished, 0 failed

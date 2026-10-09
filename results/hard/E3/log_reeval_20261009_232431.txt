@@ -1,0 +1,4 @@
+[23:24:34] E3 re-evaluation with lambda = 0: 2 policies, missions 130319e3a236, {'jax': '0.10.2', 'backend': 'gpu', 'device': 'cuda:0', 'n_devices': 1}
+[23:25:26] done  reeval_dual_l0_s0 in 46s: lambda 0, seed 0, control cost 1559.79, entropy_sum 13.38, implied total 1559.79, final_dist 0.2271
+[23:26:05] done  reeval_dual_l1_s0 in 40s: lambda 1, seed 0, control cost 1576.99, entropy_sum 13.06, implied total 1590.05, final_dist 0.2546
+[23:26:05] finished, 0 failed

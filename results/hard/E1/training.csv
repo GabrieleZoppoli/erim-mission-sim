@@ -1,0 +1,2 @@
+seed,cnn_loss,cnn_acc,pol,pol_initial,pol_improved,pol_skipped,train_seconds,data_rows,loss_est_x,loss_est_z,loss_est_f,loss_est_g
+0,1.41185,0.5,5.33369,4345.75,True,0,1491.78,60000,0.0225434,0.104544,0.270467,0.131158

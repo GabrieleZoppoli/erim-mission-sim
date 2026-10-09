@@ -1,0 +1,2 @@
+n,M,seed,n_params,cost_test,cost_train,gap,err_xp_T,err_zp_T,err_zv_T,err_f_T,err_g_T,final_dist,pol_loss,pol_initial,pol_improved,pol_skipped,loss_est_x,loss_est_z,loss_est_f,loss_est_g,cnn_J,cnn_M,cnn_seed,cnn_p_J,cnn_loss,cnn_acc,cnn_acc_near,cnn_acc_mid,cnn_acc_far
+512,3200,0,150037,1579.78,1600.73,-20.9425,0.0245541,0.245959,0.165835,0.39542,0.261377,0.255268,5.19789,647.747,1,0,0.0249735,0.273463,0.844973,0.794262,5,3200,0,106504,1.17427,0.4375,0.264964,0.846154,0.672524
