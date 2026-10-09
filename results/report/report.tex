@@ -1,0 +1,128 @@
+% Operator's technical report of the erim-mission-sim GPU study, 8-9 October 2026.
+% House format: Arial 11 pt, 1.15 spacing, justified, black, bold-only headings at body size, booktabs tables, page number bottom right.
+% Every number in a table is written by make_tables.py from the CSVs and logs in results/ (commit ddbe0a9 and the second return).
+\documentclass[11pt,a4paper]{article}
+\usepackage{fontspec}
+\setmainfont{Arial}[BoldFont={Arial Bold},ItalicFont={Arial Italic},BoldItalicFont={Arial Bold Italic}]
+\usepackage[a4paper,margin=25mm]{geometry}
+\usepackage{setspace}\setstretch{1.15}
+\usepackage{booktabs,array,tabularx,adjustbox,ragged2e,xcolor,fancyhdr,titlesec,caption,amsmath,float}
+\usepackage[hidelinks]{hyperref}
+\color{black}
+\titleformat{\section}{\normalsize\bfseries}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{1.2em}{0.4em}\titlespacing*{\subsection}{0pt}{1.0em}{0.3em}
+\captionsetup{font=small,labelfont=bf,justification=justified,singlelinecheck=false}
+\pagestyle{fancy}\fancyhf{}\fancyfoot[R]{\thepage}\renewcommand{\headrulewidth}{0pt}\renewcommand{\footrulewidth}{0pt}
+\setlength{\parskip}{0.4em}\setlength{\parindent}{0pt}
+\newcommand{\tabfit}[1]{\begin{adjustbox}{max width=\textwidth}\small #1\end{adjustbox}}
+\input{frag/flag_hard.tex}
+\begin{document}
+
+\noindent\textbf{Simulation study of the Extended Ritz Method on a Station--Machine--Object mission problem: operator's report of the GPU run of 8--9 October 2026}
+
+\noindent Report of the execution and of the results as recorded in the output files. Prepared for Gabriele Zoppoli by the operating session; the analysis, figures and interpretation for the chapter are the author's and are recomputed from the same CSV files. Version of 9 October 2026, after the second return.
+
+\section*{Summary}
+
+Four experiments comparing the Extended Ritz Method (ERIM) with a classical estimation-and-control chain were run on two 48 GB GPUs of the university node between 16:23 UTC on 8 October and the evening of 9 October 2026. The run exposed five defects that the tests at small size had not shown: a memory requirement of 146 GB for the dual-effect gradient, a training loop that kept the last iterate of a diverging policy search, a singular sensor derivative, a stopping threshold that degenerated for a confident recogniser, and an unnormalised reinforcement-learning baseline. Each was fixed by the author within the hour and the affected parts were rerun, so that every result below comes from code in which all five are repaired; the outputs of the void runs are kept as records. On 1000 identical missions the ERIM agent ends closer to the Object than the classical chain and recognises it far more often, while the chain stops more often and closer to the Object at the instant it stops. The approximation-rate sweeps completed without a single skipped gradient step. The dual-effect experiment finds no measurable effect of the information term in the main regime, where the recogniser is confident from the first stage; a follow-up in a hard-recognition regime, where recognition arrives at stage 11 in the median mission, is reported in Section~\ref{sec:hard}. Proximal policy optimisation from pixels reaches a best iterate thirty times farther from the Object than the ERIM policy and collapses late in two of three runs. Device occupancy over the whole study was \input{frag/num_gpu_total.tex} GPU-hours against the 48 agreed, the excess being the void first runs and the reruns they required; Section~\ref{sec:return} gives the account.
+
+\section{Study and setting}
+
+The problem is a rigid-body Machine that must reach a drifting Object whose dynamics and range-sensor parameters are unknown, estimating its own state and the Object's state, recognising the Object from 64-by-64-pixel images of one of eight solids, and identifying the unknown parameters, with a stopping procedure applied post hoc to logged quality proxies. Every decision function exists twice: as a fixed-structure parametrised function trained by stochastic gradient on sampled missions (ERIM), and as a classical chain of an error-state Kalman filter, an extended Kalman filter with augmented parameters, a silhouette template recogniser and a linear-quadratic controller under certainty equivalence. A mission has 300 stages of 0.1 s; one image per stage is rendered by ray-marching signed distance functions, with blur and pixel noise growing with range. Four experiments were specified: E1, the main comparison on 1000 identical missions with five ERIM training seeds; E2, a rate check of estimators of width $n$ trained on $M$ missions and of convolutional recognisers of depth $J$, with a high-capacity reference; E3, the dual effect, with the class posterior fed to the policy and a cost term $\lambda$ times the posterior entropy, $\lambda \in \{0, 0.1, 1\}$, three seeds each; and E4, proximal policy optimisation from pixels and proprioception on the same missions.
+
+The node offered two NVIDIA RTX A6000 cards with 48 GB each, driver 550.54.15 and CUDA 12.4, Python 3.10.12 as system interpreter and no root access. The pinned JAX version, 0.10.2, requires Python 3.11 or later, and the system interpreter had no \texttt{ensurepip}; a complete CPython 3.13.7 already installed with the node's sequencing software was used instead, with a virtual environment inside the study's workspace and the pip wheels of \texttt{jax[cuda12]==0.10.2}, which bundle the CUDA libraries. Both cards were visible to JAX. The workspace followed the node's conventions for a personal, disposable work area on local flash storage; nothing was written to persistent project storage or to the home directory. In this report the workspace prefix is written \texttt{\$WS} and the output directory \texttt{\$OUT}, as in the returned files.
+
+\section{Execution}
+
+\subsection{Bench and first launch}
+
+The five-minute bench of the run sheet ran first at 16:01 UTC on 8 October. The four experiments passed their smoke tests, and four of the five full-size building blocks ran at the expected speed: rendering 256 images in 0.01 s, a baseline rollout of 256 missions over 100 stages in 9.5 s, an ERIM rollout with images in 1.2 s, and a policy-search gradient at batch 256 in 0.05 s. The fifth block, the dual-effect policy gradient with the renderer inside the loop at batch 128 over 100 stages, asked the card for 146 GB; XLA's rematerialisation could not bring the requirement below 34 GB. E3 was therefore held and the two streams were launched at 16:23 UTC without it: E1 followed by the E2 recogniser sweep on the first card, the E2 estimator sweep in two shards followed by E4 on the second.
+
+\subsection{Defects found at full size and their fixes}
+
+The first E1 completed in 2 h 18 min with every unit reported as successful, yet all five ERIM policies ended about 100 m from the Object while the classical chain ended at 0.27 m. The training record showed a policy loss of infinity for every seed: the loss and gradient had been checked only at the end of each restart, so one non-finite step late in the 300-stage backward pass discarded the run and the untrained initial policy was saved. The author corrected the training loop (commit cfa81fa: per-step finiteness checks, skipped non-finite steps with a halved learning rate, and the best finite validation iterate returned) and rematerialised the stage when images are in the loop, which brought the E3 gradient to a few gigabytes. The per-step log that this commit added showed the cause of the non-finite steps within the first rerun: the loss was always finite and the gradient norm was not, which is the signature of a singular derivative rather than an overflow. Two were found (commit 1b306c9): the elevation sensor used an arcsine whose derivative is infinite when the Object sits exactly above or below the Machine, and the diagnostics of the stage log were still in the backward graph with zero cotangent. From that commit onwards no gradient step was skipped in any main-regime search: 0 in the nine E3 units, 0 in the 108 E2 estimator searches, 0 in the five E1 searches of the final run.
+
+The re-evaluation of E1 after the first fix showed every ERIM seed with a stop rate of exactly zero against 0.91 for the chain. The reference threshold of each proxy was the 75th percentile of that proxy at stage 100, and the recognition proxy, one minus the maximum posterior, is exactly zero for most missions once the recogniser is confident, so the threshold degenerated to zero and the stop condition could never hold; the chain's poorer recogniser kept its proxy positive. Commit 7161ce6 gives the recognition proxy an absolute threshold and compares with less-or-equal; the stop columns of every results file written before it are void, and the six E1 evaluations were rerun on the saved weights.
+
+E4's first seed ended 526 m from the Object with the mean reward spiking to about $-4500$ every 150 updates. Three causes were found in the implementation (commit 9af9f53): raw unnormalised inputs, absolute positions of tens of metres, into rectified layers; the value loss on unscaled returns dominating the shared features; and an evaluation that fed a zero previous action where training fed the real one. The repaired run learned, to a mean reward of $-0.17$ by update 350 from $-7.5$ early on, then destabilised when one batch of fly-away episodes inflated the return normaliser, an exponential moving average of the squared return with factor 0.99, whose half-life of about 69 updates leaves the critic's targets shrunk for the rest of the run. Commit cafa903 adds the evaluation of the iterate with the highest smoothed training reward beside the final iterate, so that the reinforcement-learning baseline is judged at its best iterate as the ERIM policy is judged at its best validation iterate, and fixes the seed selector of the runner. The remedy for the normaliser, a cap on its per-batch input or a robust scale, is recorded as a note for the chapter and was not applied during the study.
+
+Two further changes completed the protocol: commit 8ff851f re-evaluates the nine dual policies with $\lambda = 0$ on the same missions to separate control cost from the information term (the implied totals reproduce the E3 costs to the cent on all nine rows), and commit 6b3b395 runs the exploration rollouts that generate the estimator training data in chunks of 400 missions, after the reference unit at 3200 missions had asked the card for 29 GB in a single vectorised rollout. The optional hard-recognition regime of Section~\ref{sec:hard} is commit 9dcef48.
+
+\subsection{Code versions behind each result}
+
+The E1 training weights of run A come from cfa81fa and those of run B, the E1 reported here, from 9af9f53, whose simulation, sensors and cost are identical to 7161ce6; the E1 evaluations, E3 and the reference unit come from 7161ce6 or later; the E2 recogniser sweep comes from the original b727351, whose code path these fixes did not touch; the E2 estimator sweep was rerun from 9af9f53; E4 comes from 9af9f53 (seed 0) and cafa903 (seed 1 and the seed 0 rerun with best-iterate evaluation); the re-evaluations from 8ff851f; the hard regime from 9dcef48. The void outputs, the first E1, the first E3 attempt, the first E4 and the first estimator sweep, are kept beside the results with their logs.
+
+\section{Results}
+
+The statistics below are computed from the CSV files by the report's script; medians are used for distances and costs where the log lines of the runner are medians, means where they are means, and the header of each table says which. The chapter's analysis recomputes everything in R from the same files.
+
+\subsection{E1, main comparison}
+
+\begin{table}[H]\caption{E1, final run (run B): 1000 identical missions per method and seed. Stop rate and recognition at the final stage are fractions of missions; the stop stage is the median over stopped missions.}
+\tabfit{\input{frag/tab_e1_runB.tex}}\end{table}
+
+\begin{table}[H]\caption{E1, final run: training record per seed. The policy loss is the best validation loss at the full horizon; the initial value is that of the untrained policy.}
+\tabfit{\input{frag/tab_e1_training.tex}}\end{table}
+
+\begin{table}[H]\caption{E1, run A (weights from cfa81fa, evaluated with the corrected stopping rule), kept as a second training record. The frozen learning rate of that commit left its validation losses between 5.37 and 5.45 against 5.24 to 5.34 in run B.}
+\tabfit{\input{frag/tab_e1_runA.tex}}\end{table}
+
+The ERIM policies end closer to the Object than the chain and recognise it far more often; the chain stops more often, about 30 stages later, and closer to the Object at the instant it stops. These are the author's findings to interpret; the report only records them.
+
+\subsection{E2, approximation rates}
+
+\begin{table}[H]\caption{E2, estimator sweep: held-out cost, median over three seeds, by estimator width $n$ and training missions $M$.}
+\tabfit{\input{frag/tab_e2_cost.tex}}\end{table}
+
+\begin{table}[H]\caption{E2, estimator sweep: final distance in metres, median over three seeds and 1000 held-out missions.}
+\tabfit{\input{frag/tab_e2_fd.tex}}\end{table}
+
+\begin{table}[H]\caption{E2, recogniser sweep: single-image accuracy, median over three seeds, by depth $J$ and training missions $M$.}
+\tabfit{\input{frag/tab_e2_cnn.tex}}\end{table}
+
+The sweep comprises \input{frag/num_e2.tex}. \input{frag/par_e2_ref.tex} The author attributes the low single-image accuracy at short range to the image formation: under 2 m the Object's apparent radius exceeds the 64-pixel frame and the silhouette is clipped, and recognition in the missions is carried by the Bayesian accumulation of mid-range images.
+
+\subsection{E3, dual effect}
+
+\begin{table}[H]\caption{E3, main regime: nine dual policies, 1000 missions each. The total cost includes the information term $\lambda$ times the entropy sum; the control cost is the same policy re-evaluated with $\lambda = 0$ on the same missions; their difference is the information term. The first-correct stage is the median stage at which the posterior first puts the true class on top, with the number of missions in which it never does in parentheses.}
+\tabfit{\input{frag/tab_e3.tex}}\end{table}
+
+At every $\lambda$ the policy collects the same information: the recognition rate, the first-correct stage and the number of never-recognised missions do not change, and the entropy sums at $\lambda = 1$ are no lower than at $\lambda = 0$. The term is paid as about 8 cost units of control per mission and not exchanged for information, because the recogniser is already confident at the first stage in the median mission. The author's reading is that the dual effect is negligible in this regime, and the hard-recognition follow-up of Section~\ref{sec:hard} was designed to test the term where information is scarce.
+
+\subsection{E4, deep reinforcement learning from pixels}
+
+\begin{table}[H]\caption{E4, proximal policy optimisation from pixels and proprioception, 1525 updates per seed, evaluated on the same 1000 missions. The best iterate is the parameter set with the highest smoothed training reward; for seed 0 it exists only in the rerun under cafa903, which also provides a consistency check against the first seed 0.}
+\tabfit{\input{frag/tab_e4.tex}}\end{table}
+
+The three runs agree on the shape of the learning curve: a good iterate near update 360 to 370 at 6.6 to 6.9 m from the Object, then collapse of the final policy in two runs of three after the return normaliser was inflated by a batch of fly-away episodes. The two seed 0 runs followed the same trajectory until update 360 and parted after the first such batch, which the author records as run-to-run non-determinism of the GPU reductions in a few chaotic missions. The same effect appears in the E3 re-evaluation, which reproduces the E3 run to a relative $10^{-5}$ in 90\,\% of missions while 113 of 9000 missions differ in final distance by more than 1 mm; the means agree to four decimals.
+
+\section{Hard-recognition regime}\label{sec:hard}
+
+\ifnum\hardflag=1
+The follow-up keeps dynamics, sensors, cost and training sizes and makes the Object small and noisy in the image at the initial range (focal factor 0.5, pixel-noise and blur growth 0.15 per unit range, commit 9dcef48), one seed, in its own output directory.
+
+\begin{table}[H]\caption{Hard regime, E1 seed 0: the classical chain is unaffected by the image regime; the ERIM agent loses about nine points of recognition at the final stage against the main regime.}
+\tabfit{\input{frag/tab_e1_hard.tex}}\end{table}
+
+\begin{table}[H]\caption{Hard regime, E3 seed 0, $\lambda = 0$ and $\lambda = 1$, with the control-cost split.}
+\tabfit{\input{frag/tab_e3_hard.tex}}\end{table}
+
+In this regime recognition arrives at stage 11 in the median mission rather than at stage 0, so the information term has something to buy; whether $\lambda = 1$ buys earlier recognition is read from the table above and is the author's to interpret.
+\else
+The follow-up was running when this draft was compiled; its tables are filled by the report's script once the second return is in the repository.
+\fi
+
+\section{Return, budget and reproducibility}\label{sec:return}
+
+The results were returned as a \texttt{results/} directory committed on the main branch of the public repository (commit ddbe0a9, 188 files, 28 MB, no weights), followed by further commits with the hard-regime results, the reference unit and this report. Before anything left the network, the workspace prefix was replaced by \texttt{\$WS} in every metadata and log file and the staged tree was checked for the data root, the account name, the host name and the project prefix, with zero occurrences; the same check was repeated on the Mac after unpacking. Every chapter figure is recomputed in R from these files, so the numbers in this report are indicative and the files are the record. The weights, 57 MB, stay with Gabriele.
+
+\begin{table}[H]\caption{Device occupancy per stream, measured as the wall-clock span of each stream's log (the two estimator shards ran concurrently on one card and are measured together); unit time is the sum of the runner's per-unit durations and is given for reference. The agreed budget was 48 GPU-hours.}
+\tabfit{\input{frag/tab_gpu_hours.tex}}\end{table}
+
+The occupancy exceeds the agreed 48 GPU-hours. The excess is the void first run, about 4.4 hours on the first card and 10 on the second, the E1 run that preceded the stopping-rule fix, the rerun of E4 seed 0 for the best-iterate evaluation, and the optional hard-recognition follow-up, each approved as it was proposed. The record of these decisions is in the session that operated the node and in the author's session.
+
+\medskip
+\noindent\textbf{Note on this document.} The tables are written by a script from the CSV files and logs in the repository, so that no number in them is typed by hand; the prose records what was done and what the author concluded, and makes no claim of its own. Figures are left to the chapter.
+
+\end{document}

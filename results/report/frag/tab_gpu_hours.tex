@@ -1,0 +1,29 @@
+\begin{tabular}{lrrr}
+\toprule
+stream (commit) & units & unit time (h) & occupancy (h) \\
+\midrule
+\multicolumn{4}{l}{\emph{GPU 0}} \\
+bench: environment report, smoke tests, benchmark (b727351) & 4 & 0.05 & 0.13 \\
+first run: E1 (void) and E2 CNN sweep (b727351) & 29 & 4.40 & 4.40 \\
+E1 run A (cfa81fa) & 11 & 2.13 & 2.13 \\
+E3 partial, void (1b306c9) & 0 & 0.00 & 0.24 \\
+E1 re-evaluation, E3, ref attempt (7161ce6) & 15 & 18.40 & 18.41 \\
+E1 run B (9af9f53) & 11 & 2.13 & 2.13 \\
+E3 re-evaluation (8ff851f) & 9 & 0.10 & 0.10 \\
+E2 reference (6b3b395) & 1 & 0.06 & 0.06 \\
+\multicolumn{4}{l}{\emph{GPU 1}} \\
+first run: E2 estimator sweep, void, two shards (b727351) & 36 & 6.55 & 3.46 \\
+first run: E4 seed 0 (void) and 14 min of seed 1 (b727351) & 1 & 3.41 & 3.62 \\
+E2 estimator sweep, two shards (9af9f53) & 36 & 6.20 & 3.35 \\
+E4 seed 0 (9af9f53) & 1 & 3.43 & 3.43 \\
+E4 seed 1 (cafa903) & 1 & 3.44 & 3.44 \\
+E4 seed 0 rerun (cafa903) & 1 & 3.44 & 3.44 \\
+hard regime: E1 seed 0 (9dcef48) & 3 & 0.48 & 0.48 \\
+hard regime: E3 lambda 0 and 1, seed 0 (9dcef48) & 2 & 4.08 & 4.08 \\
+hard regime: re-evaluation (9dcef48) & 2 & 0.02 & 0.03 \\
+\midrule
+GPU 0 total & & & 27.6 \\
+GPU 1 total & & & 25.3 \\
+both GPUs & & & 52.9 \\
+\bottomrule
+\end{tabular}

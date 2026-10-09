@@ -1,0 +1,14 @@
+\begin{tabular}{llrrrrrrr}
+\toprule
+method & seed & $n$ & stop rate & recog. at $T$ & dist. median (m) & dist. mean (m) & cost, mean & stop stage \\
+\midrule
+baseline & -- & 1000 & 0.964 & 0.207 & 0.268 & 0.336 & 1800.7 & 142 \\
+erim & 0 & 1000 & 0.789 & 0.922 & 0.219 & 0.292 & 1573.8 & 113 \\
+erim & 1 & 1000 & 0.755 & 0.934 & 0.213 & 0.275 & 1568.4 & 114 \\
+erim & 2 & 1000 & 0.798 & 0.956 & 0.223 & 0.293 & 1575.0 & 112 \\
+erim & 3 & 1000 & 0.771 & 0.936 & 0.231 & 0.295 & 1567.7 & 109 \\
+erim & 4 & 1000 & 0.772 & 0.973 & 0.220 & 0.289 & 1572.3 & 112 \\
+\midrule
+erim, pooled & 0--4 & 5000 & 0.777 & 0.944 & 0.222 & 0.289 & 1571.4 & 112 \\
+\bottomrule
+\end{tabular}
