@@ -1,0 +1,19 @@
+[01:12:03] E1: 11 units on {'jax': '0.10.2', 'backend': 'gpu', 'device': 'cuda:0', 'n_devices': 1}
+[01:12:03] skip train_s0 (done)
+[01:12:03] skip train_s1 (done)
+[01:12:03] skip train_s2 (done)
+[01:12:03] skip train_s3 (done)
+[01:12:03] skip train_s4 (done)
+[01:12:03] start eval_baseline
+[01:14:49] done  eval_baseline in 167s: {'missions_hash': '130319e3a236', 'stopped': 0.964, 'class_ok_T': 0.207, 'final_dist': 0.2687070518732071}
+[01:14:49] start eval_erim_s0
+[01:16:00] done  eval_erim_s0 in 70s: {'missions_hash': '130319e3a236', 'stopped': 0.796, 'class_ok_T': 0.927, 'final_dist': 0.24634279310703278}
+[01:16:00] start eval_erim_s1
+[01:16:39] done  eval_erim_s1 in 40s: {'missions_hash': '130319e3a236', 'stopped': 0.728, 'class_ok_T': 0.95, 'final_dist': 0.22000865638256073}
+[01:16:39] start eval_erim_s2
+[01:17:18] done  eval_erim_s2 in 39s: {'missions_hash': '130319e3a236', 'stopped': 0.765, 'class_ok_T': 0.96, 'final_dist': 0.23560187965631485}
+[01:17:18] start eval_erim_s3
+[01:17:58] done  eval_erim_s3 in 39s: {'missions_hash': '130319e3a236', 'stopped': 0.753, 'class_ok_T': 0.933, 'final_dist': 0.22385140508413315}
+[01:17:58] start eval_erim_s4
+[01:18:36] done  eval_erim_s4 in 39s: {'missions_hash': '130319e3a236', 'stopped': 0.756, 'class_ok_T': 0.979, 'final_dist': 0.23247826844453812}
+[01:18:36] finished, 0 failed

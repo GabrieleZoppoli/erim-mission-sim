@@ -1,0 +1,11 @@
+[21:44:44] E3 re-evaluation with lambda = 0: 9 policies, missions a6cd0eee067e, {'jax': '0.10.2', 'backend': 'gpu', 'device': 'cuda:0', 'n_devices': 1}
+[21:45:35] done  reeval_dual_l0.1_s0 in 46s: lambda 0.1, seed 0, control cost 1571.38, entropy_sum 1.17, implied total 1571.50, final_dist 0.2328
+[21:46:14] done  reeval_dual_l0.1_s1 in 39s: lambda 0.1, seed 1, control cost 1567.75, entropy_sum 1.25, implied total 1567.88, final_dist 0.2221
+[21:46:53] done  reeval_dual_l0.1_s2 in 39s: lambda 0.1, seed 2, control cost 1572.49, entropy_sum 1.28, implied total 1572.61, final_dist 0.2404
+[21:47:32] done  reeval_dual_l0_s0 in 39s: lambda 0, seed 0, control cost 1570.73, entropy_sum 1.28, implied total 1570.73, final_dist 0.2331
+[21:48:11] done  reeval_dual_l0_s1 in 39s: lambda 0, seed 1, control cost 1566.78, entropy_sum 1.37, implied total 1566.78, final_dist 0.2195
+[21:48:50] done  reeval_dual_l0_s2 in 39s: lambda 0, seed 2, control cost 1571.49, entropy_sum 1.43, implied total 1571.49, final_dist 0.2370
+[21:49:30] done  reeval_dual_l1_s0 in 39s: lambda 1, seed 0, control cost 1578.83, entropy_sum 1.25, implied total 1580.08, final_dist 0.2397
+[21:50:09] done  reeval_dual_l1_s1 in 39s: lambda 1, seed 1, control cost 1575.70, entropy_sum 1.25, implied total 1576.95, final_dist 0.2275
+[21:50:47] done  reeval_dual_l1_s2 in 38s: lambda 1, seed 2, control cost 1578.68, entropy_sum 1.47, implied total 1580.15, final_dist 0.2439
+[21:50:47] finished, 0 failed

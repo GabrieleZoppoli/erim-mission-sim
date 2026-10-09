@@ -1,0 +1,25 @@
+[19:35:56] E2: 1 units on {'jax': '0.10.2', 'backend': 'gpu', 'device': 'cuda:0', 'n_devices': 1}
+[19:35:56] start ref
+[19:36:33] FAILED ref
+Traceback (most recent call last):
+  File "$WS/dev/code/erim-mission-sim-1b306c9/erimsim/runner.py", line 77, in main
+    info = exp.run_unit(c, u, out, log=log)
+  File "$WS/dev/code/erim-mission-sim-1b306c9/erimsim/experiments/e2_rates.py", line 94, in run_unit
+    row = train_eval_est(c, c.exp.n_ref, c.exp.M_ref, 0, log)
+  File "$WS/dev/code/erim-mission-sim-1b306c9/erimsim/experiments/e2_rates.py", line 39, in train_eval_est
+    params, losses = estimators.train_estimators(k[2], params, data, tcfg)
+                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "$WS/dev/code/erim-mission-sim-1b306c9/erimsim/erim/estimators.py", line 129, in train_estimators
+    out[name], losses[name] = p, float(jnp.mean(l))
+                                 ~~~~~^^^^^^^^^^^^^
+  File "$WS/dev/code/erim-mission-sim/.venv/lib/python3.13/site-packages/jax/_src/array.py", line 300, in __float__
+    return self._value.__float__()
+           ^^^^^^^^^^^
+  File "$WS/dev/code/erim-mission-sim/.venv/lib/python3.13/site-packages/jax/_src/profiler.py", line 420, in wrapper
+    return func(*args, **kwargs)
+  File "$WS/dev/code/erim-mission-sim/.venv/lib/python3.13/site-packages/jax/_src/array.py", line 623, in _value
+    npy_value, did_copy = self._single_device_array_to_np_array_did_copy()
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+jax.errors.JaxRuntimeError: RESOURCE_EXHAUSTED: Out of memory while trying to allocate 29.30GiB. [executable_name='jit__mean'] [tf-allocator-allocation-error='']
+
+[19:36:33] finished, 1 failed

@@ -1,0 +1,24 @@
+{
+ "exp": "E4",
+ "smoke": false,
+ "config": "{\n \"sim\": {\n  \"dt\": 0.1,\n  \"T\": 300,\n  \"img\": 64,\n  \"n_classes\": 8,\n  \"u_max\": 2.0,\n  \"w_max\": 1.0,\n  \"sd_v\": 0.02,\n  \"sd_w\": 0.01,\n  \"sd_vz\": 0.02,\n  \"sd_yp\": 0.05,\n  \"sd_yq\": 0.01,\n  \"sd_yv\": 0.02,\n  \"sd_yw\": 0.01,\n  \"sd_r0\": 0.2,\n  \"sd_a0\": 0.03,\n  \"r0\": 10.0,\n  \"r_min\": 8.0,\n  \"r_max\": 12.0,\n  \"sd_vz0\": 0.3,\n  \"om_max\": 0.4,\n  \"cd_max\": 0.2,\n  \"b_max\": 0.5,\n  \"s_dev\": 0.1,\n  \"k_focal\": 2.0,\n  \"march_steps\": 32,\n  \"blur0\": 0.3,\n  \"blur_r\": 0.08,\n  \"sd_px0\": 0.03,\n  \"sd_px_r\": 0.05,\n  \"c_u\": 0.1,\n  \"c_term\": 10.0\n },\n \"model\": {\n  \"N\": 10,\n  \"n_hidden\": 128,\n  \"depth\": 2,\n  \"ensemble\": 5,\n  \"cnn_J\": 4,\n  \"cnn_ch\": [\n   16,\n   32,\n   64,\n   64\n  ],\n  \"cnn_fc\": 128,\n  \"pol_hidden\": 64\n },\n \"train\": {\n  \"n_train_missions\": 400,\n  \"T_train\": 150,\n  \"est_steps\": 20000,\n  \"est_bs\": 256,\n  \"est_lr\": 0.001,\n  \"cnn_steps\": 30000,\n  \"cnn_bs\": 256,\n  \"cnn_lr\": 0.001,\n  \"pol_steps\": 3000,\n  \"pol_batch\": 256,\n  \"pol_H\": 300,\n  \"pol_lr\": 0.001,\n  \"pol_restarts\": 3,\n  \"pol_curriculum_start\": 50\n },\n \"exp\": {\n  \"name\": \"E4\",\n  \"M_eval\": 1000,\n  \"seeds\": [\n   0,\n   1,\n   2,\n   3,\n   4\n  ],\n  \"eps_scales\": [\n   0.25,\n   0.5,\n   1.0,\n   2.0,\n   4.0\n  ],\n  \"T_cons\": [\n   4,\n   8,\n   16\n  ],\n  \"t_hat\": 20,\n  \"lambdas\": [\n   0.0,\n   0.1,\n   1.0\n  ],\n  \"n_grid\": [\n   8,\n   16,\n   32,\n   64,\n   128,\n   256\n  ],\n  \"M_grid\": [\n   50,\n   100,\n   200,\n   400,\n   800,\n   1600\n  ],\n  \"J_grid\": [\n   2,\n   3,\n   4\n  ],\n  \"n_ref\": 512,\n  \"M_ref\": 3200,\n  \"J_ref\": 5,\n  \"rl_steps\": 50000000,\n  \"rl_seeds\": [\n   0,\n   1,\n   2\n  ],\n  \"rl_envs\": 1024,\n  \"rl_unroll\": 32,\n  \"sample_missions\": 20,\n  \"stage_log_missions\": 50,\n  \"e2_seeds\": [\n   0,\n   1,\n   2\n  ],\n  \"e2_est_steps\": 8000,\n  \"e2_pol_steps\": 600,\n  \"e2_cnn_steps\": 5000,\n  \"e2_M_test\": 200,\n  \"e3_pol_steps\": 2000,\n  \"e3_batch\": 128,\n  \"e3_seeds\": [\n   0,\n   1,\n   2\n  ]\n }\n}",
+ "git": "cafa903",
+ "device": {
+  "jax": "0.10.2",
+  "backend": "gpu",
+  "device": "cuda:0",
+  "n_devices": 1
+ },
+ "argv": [
+  "$WS/dev/code/erim-mission-sim-cafa903/erimsim/__main__.py",
+  "--exp",
+  "E4",
+  "--out",
+  "$WS/res/erimsim/E4_s0_cafa903",
+  "--gpu",
+  "1",
+  "--units",
+  "ppo_s0"
+ ],
+ "started": "2026-10-09 15:23:14"
+}

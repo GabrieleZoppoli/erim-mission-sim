@@ -1,0 +1,76 @@
+== Thu Oct  8 16:05:17 UTC 2026
+Thu Oct  8 18:05:17 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 550.54.15              Driver Version: 550.54.15      CUDA Version: 12.4     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA RTX A6000               Off |   00000000:41:00.0 Off |                  Off |
+| 30%   31C    P8             13W /  300W |     275MiB /  49140MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA RTX A6000               Off |   00000000:42:00.0 Off |                  Off |
+| 30%   30C    P8              6W /  300W |     275MiB /  49140MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A      2018      C   ...t/dorado/bin/dorado_basecall_server        260MiB |
+|    0   N/A  N/A     99922      G   /usr/lib/xorg/Xorg                              4MiB |
+|    1   N/A  N/A      2018      C   ...t/dorado/bin/dorado_basecall_server        260MiB |
+|    1   N/A  N/A     99922      G   /usr/lib/xorg/Xorg                              4MiB |
++-----------------------------------------------------------------------------------------+
+Python 3.13.7
+Name: jax
+Version: 0.10.2
+Name: jaxlib
+Version: 0.10.2
+== smoke tests (CPU-sized, on the selected GPU)
+E1008 18:05:48.442614  829517 cuda_timer.cc:88] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E1008 18:05:48.627677  829517 cuda_timer.cc:88] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+[18:06:41] done  eval_erim_s0 in 7s: {'missions_hash': '4892014ff937', 'stopped': 0.0, 'class_ok_T': 0.0, 'final_dist': 8.707413673400879}
+[18:06:41] finished, 0 failed
+E1008 18:09:39.108931  833894 cuda_timer.cc:88] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E1008 18:09:39.280665  833894 cuda_timer.cc:88] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+[18:11:03] done  ref in 52s: {'cost_ref': 4974.767578125, 'acc_ref': 0.16250000894069672}
+[18:11:03] finished, 0 failed
+E1008 18:11:27.278728  846987 cuda_timer.cc:88] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+E1008 18:11:27.390732  846987 cuda_timer.cc:88] Delay kernel timed out: measured time has sub-optimal accuracy. There may be a missing warmup execution, please investigate in Nsight Systems.
+[18:13:44] done  dual_l1_s0 in 72s: {'lambda': 1.0, 'seed': 0, 'class_ok_T': 0.0, 't_first_correct': -1.0, 'final_dist': 8.64018726348877, 'cost': 4157.201019287109}
+[18:13:44] finished, 0 failed
+[18:14:25] done  ppo_s0 in 40s: {'seed': 0, 'final_dist': 8.316092252731323, 'cost': 3956.4588012695312, 'train_seconds': 40.07775950431824}
+[18:14:25] finished, 0 failed
+== benchmark at full size
+device: {'jax': '0.10.2', 'backend': 'gpu', 'device': 'cuda:0', 'n_devices': 1} python 3.13.7
+render 256 images 64x64                          compile+run     3.3s   run    0.01s
+baseline rollout 256 missions x 100 stages       compile+run    19.4s   run    9.53s
+ERIM rollout 256 missions x 100 stages (images)  compile+run    10.7s   run    1.24s
+policy-search gradient, batch 256 x 100 stages   compile+run     6.2s   run    0.05s
+W1008 18:15:57.176950  854778 hlo_rematerialization.cc:3231] Can't reduce memory use below 33.87GiB (36363314924 bytes) by rematerialization; only reduced to 145.57GiB (156304664508 bytes), down from 145.84GiB (156598530584 bytes) originally
+W1008 18:16:10.142017  854778 bfc_allocator.cc:514] Allocator (GPU_0_bfc) ran out of memory trying to allocate 145.83GiB (rounded to 156589047552)requested by op 
+If the cause is memory fragmentation maybe the environment variable 'TF_GPU_ALLOCATOR=cuda_malloc_async' will improve the situation. 
+Current allocation summary follows.
+Current allocation summary follows.
+W1008 18:16:10.142274  854778 bfc_allocator.cc:525] *__________________________________________________________________________________________________*
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "$WS/dev/code/erim-mission-sim/erimsim/bench.py", line 56, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "$WS/dev/code/erim-mission-sim/erimsim/bench.py", line 48, in main
+    timed("dual policy gradient (images in loop), batch 128 x 100", g1, params.pol, ms128)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "$WS/dev/code/erim-mission-sim/erimsim/bench.py", line 25, in timed
+    t0 = time.time(); r = f(*args); jax.block_until_ready(r); t1 = time.time()
+                                    ~~~~~~~~~~~~~~~~~~~~~^^^
+  File "$WS/dev/code/erim-mission-sim/.venv/lib/python3.13/site-packages/jax/_src/api.py", line 2512, in block_until_ready
+    xc.batched_block_until_ready(arrays)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+jax.errors.JaxRuntimeError: RESOURCE_EXHAUSTED: Out of memory while trying to allocate 145.83GiB. [executable_name='jit__lambda'] [tf-allocator-allocation-error='']

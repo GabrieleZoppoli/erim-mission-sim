@@ -1,0 +1,39 @@
+[18:23:06] E1: 11 units on {'jax': '0.10.2', 'backend': 'gpu', 'device': 'cuda:0', 'n_devices': 1}
+[18:23:06] start train_s0
+[18:24:29]   estimators trained: {'est_x': 0.022580543532967567, 'est_z': 0.10434945672750473, 'est_f': 0.2727852761745453, 'est_g': 0.13299258053302765}  (80s)
+[18:31:01]   recogniser trained: final loss 0.924, accuracy on training poses 0.607  (472s)
+[18:48:53]   policy trained: best loss inf (restart None)  (1544s)
+[18:48:53] done  train_s0 in 1547s: {'est_losses': {'est_x': 0.022580543532967567, 'est_z': 0.10434945672750473, 'est_f': 0.2727852761745453, 'est_g': 0.13299258053302765}, 'cnn_loss': 0.9242240190505981, 'cnn_acc': 0.607421875, 'pol': inf, 'train_seconds': 1544.0254490375519, 'data_rows': 60000}
+[18:48:53] start train_s1
+[18:49:55]   estimators trained: {'est_x': 0.02274482697248459, 'est_z': 0.11166602373123169, 'est_f': 0.2814480662345886, 'est_g': 0.1325979232788086}  (62s)
+[18:56:18]   recogniser trained: final loss 0.965, accuracy on training poses 0.557  (446s)
+[19:14:03]   policy trained: best loss inf (restart None)  (1510s)
+[19:14:04] done  train_s1 in 1511s: {'est_losses': {'est_x': 0.02274482697248459, 'est_z': 0.11166602373123169, 'est_f': 0.2814480662345886, 'est_g': 0.1325979232788086}, 'cnn_loss': 0.9650405049324036, 'cnn_acc': 0.556640625, 'pol': inf, 'train_seconds': 1510.3373725414276, 'data_rows': 60000}
+[19:14:04] start train_s2
+[19:15:06]   estimators trained: {'est_x': 0.023288147523999214, 'est_z': 0.114268958568573, 'est_f': 0.27214932441711426, 'est_g': 0.13990765810012817}  (62s)
+[19:21:27]   recogniser trained: final loss 0.971, accuracy on training poses 0.586  (444s)
+[19:39:12]   policy trained: best loss inf (restart None)  (1508s)
+[19:39:12] done  train_s2 in 1509s: {'est_losses': {'est_x': 0.023288147523999214, 'est_z': 0.114268958568573, 'est_f': 0.27214932441711426, 'est_g': 0.13990765810012817}, 'cnn_loss': 0.9705845713615417, 'cnn_acc': 0.5859375, 'pol': inf, 'train_seconds': 1508.2463657855988, 'data_rows': 60000}
+[19:39:12] start train_s3
+[19:40:15]   estimators trained: {'est_x': 0.022534355521202087, 'est_z': 0.10987644642591476, 'est_f': 0.2767347991466522, 'est_g': 0.1324506253004074}  (62s)
+[19:46:36]   recogniser trained: final loss 0.904, accuracy on training poses 0.594  (444s)
+[20:04:22]   policy trained: best loss inf (restart None)  (1510s)
+[20:04:22] done  train_s3 in 1510s: {'est_losses': {'est_x': 0.022534355521202087, 'est_z': 0.10987644642591476, 'est_f': 0.2767347991466522, 'est_g': 0.1324506253004074}, 'cnn_loss': 0.9041464924812317, 'cnn_acc': 0.59375, 'pol': inf, 'train_seconds': 1509.6017169952393, 'data_rows': 60000}
+[20:04:22] start train_s4
+[20:05:24]   estimators trained: {'est_x': 0.02331615798175335, 'est_z': 0.10663819313049316, 'est_f': 0.27544814348220825, 'est_g': 0.13631044328212738}  (62s)
+[20:11:46]   recogniser trained: final loss 0.843, accuracy on training poses 0.584  (444s)
+[20:29:31]   policy trained: best loss inf (restart None)  (1509s)
+[20:29:32] done  train_s4 in 1510s: {'est_losses': {'est_x': 0.02331615798175335, 'est_z': 0.10663819313049316, 'est_f': 0.27544814348220825, 'est_g': 0.13631044328212738}, 'cnn_loss': 0.8431909084320068, 'cnn_acc': 0.583984375, 'pol': inf, 'train_seconds': 1509.4611904621124, 'data_rows': 60000}
+[20:29:32] start eval_baseline
+[20:32:19] done  eval_baseline in 168s: {'missions_hash': '130319e3a236', 'stopped': 0.911, 'class_ok_T': 0.228, 'final_dist': 0.26810789108276367}
+[20:32:19] start eval_erim_s0
+[20:33:25] done  eval_erim_s0 in 66s: {'missions_hash': '130319e3a236', 'stopped': 0.0, 'class_ok_T': 0.226, 'final_dist': 122.54241943359375}
+[20:33:25] start eval_erim_s1
+[20:34:05] done  eval_erim_s1 in 40s: {'missions_hash': '130319e3a236', 'stopped': 0.0, 'class_ok_T': 0.174, 'final_dist': 152.9925079345703}
+[20:34:05] start eval_erim_s2
+[20:34:45] done  eval_erim_s2 in 40s: {'missions_hash': '130319e3a236', 'stopped': 0.0, 'class_ok_T': 0.372, 'final_dist': 91.60628890991211}
+[20:34:45] start eval_erim_s3
+[20:35:25] done  eval_erim_s3 in 40s: {'missions_hash': '130319e3a236', 'stopped': 0.0, 'class_ok_T': 0.85, 'final_dist': 40.48884582519531}
+[20:35:25] start eval_erim_s4
+[20:36:04] done  eval_erim_s4 in 40s: {'missions_hash': '130319e3a236', 'stopped': 0.0, 'class_ok_T': 0.4, 'final_dist': 84.94770431518555}
+[20:36:04] finished, 0 failed

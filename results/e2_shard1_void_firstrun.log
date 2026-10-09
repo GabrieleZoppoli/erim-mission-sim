@@ -1,0 +1,92 @@
+[18:23:06] E2: 18 units on {'jax': '0.10.2', 'backend': 'gpu', 'device': 'cuda:0', 'n_devices': 1}
+[18:23:06] start est_n8_M100
+[18:25:32]   est n=8 M=100 seed=0: cost_test 1053304.8 gap 56637.2 (146s)
+[18:27:29]   est n=8 M=100 seed=1: cost_test 1650.3 gap -36.9 (116s)
+[18:29:25]   est n=8 M=100 seed=2: cost_test 1670.2 gap -9.3 (116s)
+[18:29:25] done  est_n8_M100 in 379s: {'n': 8, 'M': 100, 'cost_test': 352208.4079589844}
+[18:29:25] start est_n8_M400
+[18:32:30]   est n=8 M=400 seed=0: cost_test 1424520.5 gap 211755.4 (185s)
+[18:35:23]   est n=8 M=400 seed=1: cost_test 842531.9 gap 8814.0 (174s)
+[18:39:19]   est n=8 M=400 seed=2: cost_test 483664.6 gap 40017.2 (236s)
+[18:39:19] done  est_n8_M400 in 594s: {'n': 8, 'M': 400, 'cost_test': 916905.6666666666}
+[18:39:19] start est_n8_M1600
+[18:46:22]   est n=8 M=1600 seed=0: cost_test 1645428.8 gap 118204.1 (423s)
+[18:53:19]   est n=8 M=1600 seed=1: cost_test 336904.9 gap 15030.7 (417s)
+[18:59:01]   est n=8 M=1600 seed=2: cost_test 1645.1 gap -26.4 (342s)
+[18:59:01] done  est_n8_M1600 in 1181s: {'n': 8, 'M': 1600, 'cost_test': 661326.2665608724}
+[18:59:01] start est_n16_M100
+[19:01:24]   est n=16 M=100 seed=0: cost_test 400816.7 gap 25504.3 (143s)
+[19:03:30]   est n=16 M=100 seed=1: cost_test 1617.8 gap 74.6 (127s)
+[19:05:35]   est n=16 M=100 seed=2: cost_test 390986.5 gap -18727.7 (125s)
+[19:05:35] done  est_n16_M100 in 394s: {'n': 16, 'M': 100, 'cost_test': 264473.6384684245}
+[19:05:35] start est_n16_M400
+[19:09:40]   est n=16 M=400 seed=0: cost_test 1279325.6 gap -162541.2 (245s)
+[19:13:40]   est n=16 M=400 seed=1: cost_test 533519.9 gap 19576.3 (240s)
+[19:16:57]   est n=16 M=400 seed=2: cost_test 641306.4 gap 39615.8 (197s)
+[19:16:57] done  est_n16_M400 in 681s: {'n': 16, 'M': 400, 'cost_test': 818050.6458333334}
+[19:16:57] start est_n16_M1600
+[19:23:04]   est n=16 M=1600 seed=0: cost_test 1611.6 gap -23.3 (367s)
+[19:28:42]   est n=16 M=1600 seed=1: cost_test 245956.6 gap 13354.6 (337s)
+[19:34:40]   est n=16 M=1600 seed=2: cost_test 689896.0 gap 6322.6 (358s)
+[19:34:40] done  est_n16_M1600 in 1063s: {'n': 16, 'M': 1600, 'cost_test': 312488.0802815755}
+[19:34:40] start est_n32_M100
+[19:36:57]   est n=32 M=100 seed=0: cost_test 187645.4 gap -31266.1 (137s)
+[19:39:59]   est n=32 M=100 seed=1: cost_test 2334244.5 gap -226069.5 (182s)
+[19:42:19]   est n=32 M=100 seed=2: cost_test 631376.2 gap 24982.2 (140s)
+[19:42:19] done  est_n32_M100 in 459s: {'n': 32, 'M': 100, 'cost_test': 1051088.703125}
+[19:42:19] start est_n32_M400
+[19:46:23]   est n=32 M=400 seed=0: cost_test 1749806.6 gap 43392.2 (244s)
+[19:50:17]   est n=32 M=400 seed=1: cost_test 831778.6 gap 30209.6 (234s)
+[19:53:02]   est n=32 M=400 seed=2: cost_test 1612.2 gap -58.7 (165s)
+[19:53:02] done  est_n32_M400 in 643s: {'n': 32, 'M': 400, 'cost_test': 861065.7941487631}
+[19:53:02] start est_n32_M1600
+[19:58:46]   est n=32 M=1600 seed=0: cost_test 117556.6 gap 3272.4 (344s)
+[20:04:54]   est n=32 M=1600 seed=1: cost_test 1609.5 gap -45.5 (369s)
+[20:10:49]   est n=32 M=1600 seed=2: cost_test 1607.4 gap -38.4 (354s)
+[20:10:49] done  est_n32_M1600 in 1067s: {'n': 32, 'M': 1600, 'cost_test': 40257.83557128906}
+[20:10:49] start est_n64_M100
+[20:13:43]   est n=64 M=100 seed=0: cost_test 861332.1 gap -55415.1 (175s)
+[20:16:47]   est n=64 M=100 seed=1: cost_test 156225.8 gap 4464.6 (184s)
+[20:20:04]   est n=64 M=100 seed=2: cost_test 1628.6 gap -51.1 (197s)
+[20:20:04] done  est_n64_M100 in 556s: {'n': 64, 'M': 100, 'cost_test': 339728.8448486328}
+[20:20:04] start est_n64_M400
+[20:23:02]   est n=64 M=400 seed=0: cost_test 788132.4 gap -19590.2 (178s)
+[20:26:01]   est n=64 M=400 seed=1: cost_test 1605.2 gap -18.0 (179s)
+[20:28:59]   est n=64 M=400 seed=2: cost_test 939935.7 gap -57922.1 (179s)
+[20:28:59] done  est_n64_M400 in 535s: {'n': 64, 'M': 400, 'cost_test': 576557.7444254557}
+[20:28:59] start est_n64_M1600
+[20:34:56]   est n=64 M=1600 seed=0: cost_test 184808.3 gap -20579.7 (357s)
+[20:41:09]   est n=64 M=1600 seed=1: cost_test 358217.6 gap 6169.8 (373s)
+[20:48:47]   est n=64 M=1600 seed=2: cost_test 1601.9 gap -50.3 (458s)
+[20:48:47] done  est_n64_M1600 in 1188s: {'n': 64, 'M': 1600, 'cost_test': 181542.59676106772}
+[20:48:47] start est_n128_M100
+[20:51:40]   est n=128 M=100 seed=0: cost_test 2143533.8 gap -125050.5 (173s)
+[20:54:15]   est n=128 M=100 seed=1: cost_test 680508.9 gap 29299.3 (155s)
+[20:56:12]   est n=128 M=100 seed=2: cost_test 1635.4 gap -3.7 (117s)
+[20:56:12] done  est_n128_M100 in 445s: {'n': 128, 'M': 100, 'cost_test': 941892.6872965494}
+[20:56:12] start est_n128_M400
+[20:59:04]   est n=128 M=400 seed=0: cost_test 846310.7 gap -13703.7 (172s)
+[21:02:00]   est n=128 M=400 seed=1: cost_test 357920.6 gap -2347.4 (176s)
+[21:04:59]   est n=128 M=400 seed=2: cost_test 1605.3 gap 23.2 (179s)
+[21:04:59] done  est_n128_M400 in 527s: {'n': 128, 'M': 400, 'cost_test': 401945.52978515625}
+[21:04:59] start est_n128_M1600
+[21:10:46]   est n=128 M=1600 seed=0: cost_test nan gap nan (348s)
+[21:17:49]   est n=128 M=1600 seed=1: cost_test 380565.6 gap -48038.6 (423s)
+[21:25:31]   est n=128 M=1600 seed=2: cost_test 378018.6 gap -44299.7 (462s)
+[21:25:31] done  est_n128_M1600 in 1232s: {'n': 128, 'M': 1600, 'cost_test': nan}
+[21:25:31] start est_n256_M100
+[21:27:56]   est n=256 M=100 seed=0: cost_test 1610.2 gap -62.0 (145s)
+[21:29:34]   est n=256 M=100 seed=1: cost_test 641739.7 gap 2057.4 (98s)
+[21:31:11]   est n=256 M=100 seed=2: cost_test 440963.0 gap 36316.2 (97s)
+[21:31:11] done  est_n256_M100 in 340s: {'n': 256, 'M': 100, 'cost_test': 361437.64099121094}
+[21:31:11] start est_n256_M400
+[21:33:26]   est n=256 M=400 seed=0: cost_test 346838.2 gap -9576.5 (136s)
+[21:35:41]   est n=256 M=400 seed=1: cost_test 1590.7 gap -43.4 (135s)
+[21:37:57]   est n=256 M=400 seed=2: cost_test 1189809.2 gap 185873.6 (136s)
+[21:37:57] done  est_n256_M400 in 406s: {'n': 256, 'M': 400, 'cost_test': 512746.0492757161}
+[21:37:57] start est_n256_M1600
+[21:42:18]   est n=256 M=1600 seed=0: cost_test 383013.7 gap -16186.8 (261s)
+[21:46:39]   est n=256 M=1600 seed=1: cost_test 662099.4 gap 11946.5 (261s)
+[21:50:59]   est n=256 M=1600 seed=2: cost_test 674151.1 gap -29111.6 (261s)
+[21:50:59] done  est_n256_M1600 in 782s: {'n': 256, 'M': 1600, 'cost_test': 573088.0729166666}
+[21:50:59] finished, 0 failed
