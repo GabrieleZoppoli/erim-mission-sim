@@ -67,6 +67,9 @@ if (!is.null(C)) { plot(NA, xlim = range(AC$M), ylim = c(0, 1), log = "x", xlab 
   for (J in sort(unique(AC$J))) { lines(AC$M[AC$J == J], AC$acc[AC$J == J], type = "b", pch = 15 + J, col = J); lines(AC$M[AC$J == J], AC$acc_mid[AC$J == J], lty = 3, col = J) }
   if (!is.na(REF$cnn_acc[1])) points(REF$cnn_M[1], REF$cnn_acc[1], pch = 8, cex = 1.5)
   legend("topleft", legend = c(paste("J =", sort(unique(AC$J))), "reference"), col = c(sort(unique(AC$J)), 1), pch = c(15 + sort(unique(AC$J)), 8), bty = "n", cex = 0.85)
-  plot(A0x$n[A0x$M == Mmax], A0x$ex_f[A0x$M == Mmax], log = "xy", pch = 16, type = "b", xlab = "width n", ylab = "excess f error", main = sprintf("err_f vs n: slope %.2f", s0["f_n"])); refline(A0x$n[A0x$M == Mmax], A0x$ex_f[A0x$M == Mmax]) }
+  Ms <- sort(unique(A0x$M)); colM <- setNames(grey.colors(length(Ms), start = 0.75, end = 0), Ms)
+  plot(NA, xlim = range(A0x$n), ylim = range(A0x$ex_cost), log = "xy", xlab = "width n", ylab = "excess cost over the reference", main = "cost vs n for every M (two-term structure)")
+  for (m in Ms) { r <- A0x[A0x$M == m, ]; r <- r[order(r$n), ]; lines(r$n, r$ex_cost, type = "b", pch = 16, col = colM[as.character(m)]) }
+  refline(A0x$n[A0x$M == Mmax], A0x$ex_cost[A0x$M == Mmax]); legend("bottomleft", legend = paste("M =", Ms), col = colM, lwd = 1, pch = 16, bty = "n", cex = 0.8) }
 dev.off()
 cat("written", file.path(e2, "tables"), "and", file.path(e2, "figures"), "\n")
